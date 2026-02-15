@@ -1,15 +1,15 @@
-// firebase-config.js
+// firebase-config.js - UPDATED FOR NEW PROJECT
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAv8CFsgzlJtvHuGCTFN0W0mEyoqL5lv2g",
-  authDomain: "studio-1828194590-1241e.firebaseapp.com",
-  projectId: "studio-1828194590-1241e",
-  storageBucket: "studio-1828194590-1241e.firebasestorage.app",
-  messagingSenderId: "70441151978",
-  appId: "1:70441151978:web:f1d83fd216cf11a56b5693"
+  apiKey: "AIzaSyD4EQjRWrHkICrNuCn6k9l3Yy0nLmEwXDg",
+  authDomain: "restaurant-qr-app-fe547.firebaseapp.com",
+  projectId: "restaurant-qr-app-fe547",
+  storageBucket: "restaurant-qr-app-fe547.firebasestorage.app",
+  messagingSenderId: "967269323794",
+  appId: "1:967269323794:web:bbd51d91e6fc5b3d4cb4cb"
 };
 
 const app = initializeApp(firebaseConfig);
