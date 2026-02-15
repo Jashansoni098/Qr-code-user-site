@@ -1,14 +1,65 @@
-<!-- Mobile First Menu UI -->
-<div class="user-container">
-    <header>
-        <h1 id="rName">Platto Shop</h1>
-        <div class="loyalty">Points: <span id="pts">0</span></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platto | Digital Menu</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="user-style.css">
+</head>
+<body>
+
+    <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
+
+    <!-- App Header -->
+    <header class="main-header">
+        <div class="res-branding">
+            <img id="res-logo" src="https://via.placeholder.com/60" alt="Logo">
+            <div class="res-details">
+                <h1 id="res-name-display">Loading Restaurant...</h1>
+                <p id="table-info">Table No: <span id="tbl-no">--</span></p>
+            </div>
+        </div>
+        <div class="loyalty-badge">
+            <small>Loyalty Points</small>
+            <div id="user-pts">0</div>
+        </div>
     </header>
 
-    <div id="foodGrid" class="food-grid"></div>
+    <!-- Categories / Offers -->
+    <section class="offers-section">
+        <div class="offer-card">
+            <p>Get 10 Points on every ₹100 spent! 🎁</p>
+        </div>
+    </section>
 
-    <div class="cart-bar">
-        <span>Total: ₹<span id="total">0</span></span>
-        <button onclick="placeOrder()">Checkout</button>
+    <!-- Menu Container -->
+    <main class="menu-container">
+        <div class="section-title">
+            <h3>Explore Menu</h3>
+            <div class="filter-btns">
+                <button class="active">All</button>
+                <button>Veg</button>
+                <button>Non-Veg</button>
+            </div>
+        </div>
+
+        <div id="menu-list" class="food-list">
+            <!-- Food Cards will be injected here -->
+        </div>
+    </main>
+
+    <!-- Floating Cart Bar -->
+    <div id="cart-bar" class="cart-bar" style="display: none;">
+        <div class="cart-info">
+            <span id="cart-count">0 Items</span>
+            <span class="dot"></span>
+            <span id="cart-total">₹0</span>
+        </div>
+        <button onclick="placeOrder()" class="checkout-btn">Place Order →</button>
     </div>
-</div>
+
+    <script type="module" src="user-script.js"></script>
+</body>
+</html>
