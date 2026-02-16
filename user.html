@@ -4,60 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Platto | Digital Menu</title>
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="user-style.css">
+    <!-- QR Library for Payment QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
-    <!-- App Header -->
-    <header class="main-header">
+    <!-- Header & Info -->
+    <header class="app-header">
         <div class="res-branding">
-            <img id="res-logo" src="https://via.placeholder.com/60" alt="Logo">
-            <div class="res-details">
-                <h1 id="res-name-display">Loading Restaurant...</h1>
-                <p id="table-info">Table No: <span id="tbl-no">--</span></p>
+            <img id="res-logo" src="https://via.placeholder.com/80" alt="Logo">
+            <div class="res-text">
+                <h1 id="res-name-display">Loading...</h1>
+                <p id="res-address">Please wait...</p>
+                <div class="header-tags">
+                    <span id="table-badge">Table 01</span>
+                    <span class="rating-badge">★ 4.5</span>
+                </div>
             </div>
         </div>
-        <div class="loyalty-badge">
-            <small>Loyalty Points</small>
-            <div id="user-pts">0</div>
-        </div>
+        <a id="call-btn" href="tel:" class="call-circle">📞</a>
     </header>
 
-    <!-- Categories / Offers -->
-    <section class="offers-section">
+    <!-- Offers Section -->
+    <section class="offers-container">
         <div class="offer-card">
-            <p>Get 10 Points on every ₹100 spent! 🎁</p>
+            <div class="offer-info">
+                <h3>Flat 10% OFF</h3>
+                <p>On first order | Code: PLATTO10</p>
+            </div>
+            <img src="https://cdn-icons-png.flaticon.com/512/2331/2331102.png" width="50">
         </div>
     </section>
 
-    <!-- Menu Container -->
-    <main class="menu-container">
-        <div class="section-title">
-            <h3>Explore Menu</h3>
-            <div class="filter-btns">
-                <button class="active">All</button>
-                <button>Veg</button>
-                <button>Non-Veg</button>
-            </div>
-        </div>
+    <!-- Categories -->
+    <div class="categories-nav">
+        <button class="cat-chip active">All</button>
+        <button class="cat-chip">Best Sellers</button>
+        <button class="cat-chip">Veg</button>
+        <button class="cat-chip">Drinks</button>
+    </div>
 
-        <div id="menu-list" class="food-list">
-            <!-- Food Cards will be injected here -->
-        </div>
+    <!-- Menu List -->
+    <main id="menu-list" class="food-list">
+        <!-- Items will be injected by JS -->
     </main>
 
-    <!-- Floating Cart Bar -->
-    <div id="cart-bar" class="cart-bar" style="display: none;">
-        <div class="cart-info">
-            <span id="cart-count">0 Items</span>
-            <span class="dot"></span>
-            <span id="cart-total">₹0</span>
+    <!-- Bottom Bar -->
+    <footer id="cart-bar" class="cart-bar" style="display:none;">
+        <div class="cart-details">
+            <span id="cart-qty">0 Items</span>
+            <span class="price-text">Total: <b id="cart-total">₹0</b></span>
         </div>
-        <button onclick="placeOrder()" class="checkout-btn">Place Order →</button>
+        <button onclick="openPaymentModal()" class="checkout-btn">Checkout →</button>
+    </footer>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <h3>Scan & Pay</h3>
+            <p>Direct payment to restaurant</p>
+            <div id="payment-qr" class="qr-container"></div>
+            <p class="upi-id">UPI: <span id="display-upi">--</span></p>
+            <button onclick="closeModal()" class="close-btn">Close</button>
+            <button onclick="confirmOrder()" class="confirm-btn">I've Paid Online</button>
+        </div>
     </div>
 
     <script type="module" src="user-script.js"></script>
