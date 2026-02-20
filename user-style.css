@@ -69,3 +69,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #f8f
 
 /* Confirm Button Disabled State */
 .btn-confirm:disabled { background: #cbd5e1; cursor: not-allowed; }
+.success-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--white); z-index: 5000; display: flex; justify-content: center; align-items: center; text-align: center; }
+.success-card { padding: 40px; }
+.success-icon { font-size: 4rem; margin-bottom: 20px; }
+.order-summary-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px dashed #cbd5e1; }

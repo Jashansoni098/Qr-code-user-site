@@ -177,30 +177,36 @@ window.confirmOrder = async () => {
             userUID: userUID
         };
 
+        // Firebase mein order bhejna
         await addDoc(collection(db, "orders"), orderData);
 
-        // Update Loyalty Points (Earn 10 pts per 100)
+        // Loyalty points update
         const earned = Math.floor(total / 100) * 10;
         const userRef = doc(db, "users", userUID);
         const userSnap = await getDoc(userRef);
         let currentPts = userSnap.exists() ? userSnap.data().points : 0;
-        
-        // Deduct 1000 if redeemed
         if(currentPts >= 1000) currentPts -= 1000;
         await setDoc(userRef, { points: currentPts + earned }, { merge: true });
 
-        // Alert Message
-        if(selectedPaymentMode === "Cash") {
-            alert(`🎉 Order Placed!\n\n${custName}, kripya counter se apne bill ki receipt le lijiye confirmation ke liye.`);
-        } else {
-            alert("🎉 Order Placed! Kripya counter par apna payment success screen dikhayein.");
-        }
+        // SHOW SUCCESS SCREEN
+        document.getElementById('paymentModal').style.display = 'none';
+        document.getElementById('success-screen').style.display = 'flex';
+        document.getElementById('summary-name').innerText = custName;
+        document.getElementById('summary-table').innerText = tableNo;
 
-        location.reload();
+        // Reset Cart
+        cart = []; total = 0;
+        document.getElementById('cart-bar').style.display = 'none';
+
     } catch (e) {
         alert("Error: " + e.message);
     }
     if(loader) loader.style.display = 'none';
+};
+
+window.closeSuccess = () => {
+    document.getElementById('success-screen').style.display = 'none';
+    location.reload(); // Wapas fresh menu par
 };
 
 // --- 6. Live Tracking & Invoice ---
