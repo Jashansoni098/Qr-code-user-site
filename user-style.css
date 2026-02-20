@@ -50,3 +50,22 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #f8f
 .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; }
 .spinner { width: 35px; height: 35px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+/* Name Input */
+.input-group-user { text-align: left; margin-bottom: 15px; }
+.input-group-user label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 5px; }
+#cust-name { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
+
+/* Payment Selection Buttons */
+.payment-options { display: flex; gap: 10px; }
+.pay-choice-btn { flex: 1; padding: 15px 10px; border-radius: 15px; border: 2px solid #e2e8f0; background: white; cursor: pointer; transition: 0.3s; font-weight: 700; font-family: inherit; }
+.pay-choice-btn span { display: block; font-size: 1.5rem; margin-bottom: 5px; }
+.pay-choice-btn.selected { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
+
+/* QR and Info Box */
+.qr-preview { margin: 15px auto; width: 150px; height: 150px; }
+.upi-display { font-size: 0.8rem; font-weight: 700; color: var(--dark); margin: 5px 0; }
+.copy-btn { background: #f1f5f9; border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; }
+.alert-box-info { background: #fffbeb; color: #92400e; padding: 15px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; line-height: 1.4; border: 1px solid #fde68a; }
+
+/* Confirm Button Disabled State */
+.btn-confirm:disabled { background: #cbd5e1; cursor: not-allowed; }

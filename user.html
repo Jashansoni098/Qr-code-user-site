@@ -88,29 +88,49 @@
         <button class="checkout-btn" onclick="openPaymentModal()">View Cart →</button>
     </footer>
 
-    <!-- Payment Modal -->
-    <div id="paymentModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Final Order</h3>
-            <div id="loyalty-discount-msg" class="discount-banner" style="display:none;">
-                🎉 1000 Points! ₹10 Discount applied.
-            </div>
-            
-            <div class="instruction-box">
-                <label>Instructions for Chef:</label>
-                <textarea id="chef-instruction" placeholder="e.g. No onion, spicy..."></textarea>
-            </div>
+   <!-- Payment Modal (Updated with Name and Options) -->
+<div id="paymentModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modal-title">Complete Your Order</h3>
+        
+        <!-- Step 1: User Details -->
+        <div class="input-group-user">
+            <label>Your Name</label>
+            <input type="text" id="cust-name" placeholder="Enter your full name">
+        </div>
 
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+        <!-- Step 2: Payment Choice -->
+        <p style="font-weight: 700; margin-bottom: 15px;">Choose Payment Mode</p>
+        <div class="payment-options">
+            <button onclick="selectPaymentMode('Online')" id="btn-pay-online" class="pay-choice-btn">
+                <span>💳</span> Online Payment
+            </button>
+            <button onclick="selectPaymentMode('Cash')" id="btn-pay-cash" class="pay-choice-btn">
+                <span>💵</span> Cash at Counter
+            </button>
+        </div>
+
+        <!-- Online Payment QR (Initially hidden) -->
+        <div id="online-qr-section" style="display:none; margin-top:20px;">
+            <p style="font-size: 0.8rem; color: gray;">Scan & Pay to Restaurant UPI</p>
             <div id="payment-qr" class="qr-preview"></div>
-            <p class="upi-text">Payable: <b>₹<span id="final-amt">0</span></b></p>
-            
-            <div class="modal-actions">
-                <button onclick="payViaUPI()" class="btn-upi">Pay with UPI Apps</button>
-                <button onclick="confirmOrder()" class="btn-confirm">I've Paid Online</button>
-                <button onclick="closeModal()" class="btn-close">Close</button>
-            </div>
+            <p class="upi-display" id="display-upi-id">---</p>
+            <button onclick="copyUPI()" class="copy-btn">Copy UPI ID</button>
+        </div>
+
+        <!-- Cash Message (Initially hidden) -->
+        <div id="cash-msg-section" style="display:none; margin-top:20px;" class="alert-box-info">
+            ⚠️ Order confirmation ke liye counter se apne bill ki receipt le lijiye.
+        </div>
+
+        <div class="modal-actions" style="margin-top:25px;">
+            <button id="final-confirm-btn" onclick="confirmOrder()" class="btn-confirm" disabled>Place Order (₹<span id="final-amt">0</span>)</button>
+            <button onclick="closeModal()" class="btn-close">Cancel</button>
         </div>
     </div>
+</div>
 
     <script type="module" src="user-script.js"></script>
 </body>
