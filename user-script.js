@@ -6,6 +6,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const resId = urlParams.get('resId');
 const tableNo = urlParams.get('table') || "01";
 
+// Persistent Data
 let cart = JSON.parse(localStorage.getItem(`p_cart_${resId}`)) || [];
 let restaurantData = {};
 let selectedPaymentMode = "";
@@ -16,7 +17,7 @@ const loader = document.getElementById('loader');
 
 async function init() {
     if (!resId) {
-        document.body.innerHTML = "<h3 style='text-align:center; padding:100px;'>⚠️ Invalid QR.</h3>";
+        document.body.innerHTML = "<div style='text-align:center; padding-top:100px;'><h3>⚠️ Please scan the QR code.</h3></div>";
         return;
     }
 
@@ -24,6 +25,7 @@ async function init() {
     if (resSnap.exists()) {
         restaurantData = resSnap.data();
         renderBranding();
+        handleAnnouncement();
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -40,7 +42,7 @@ async function init() {
 function renderBranding() {
     document.getElementById('res-name-display').innerText = restaurantData.name;
     document.getElementById('wait-time').innerText = restaurantData.prepTime || "20";
-    document.getElementById('res-about-text').innerText = restaurantData.about || "";
+    document.getElementById('res-about-text').innerText = restaurantData.about || "Digital Menu Enabled";
     document.getElementById('tbl-no').innerText = tableNo;
     if(restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
     
@@ -56,6 +58,15 @@ function renderBranding() {
     document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
 }
 
+function handleAnnouncement() {
+    if(restaurantData.activeAnnouncement) {
+        document.getElementById('announcement-modal').style.display = "flex";
+        document.getElementById('ann-title').innerText = restaurantData.annTitle || "Announcement";
+        document.getElementById('ann-desc').innerText = restaurantData.annText || "";
+    }
+}
+
+// Global Exports for HTML
 window.addToCart = (name, price) => {
     cart.push({ name, price });
     localStorage.setItem(`p_cart_${resId}`, JSON.stringify(cart));
@@ -80,7 +91,7 @@ window.openPaymentModal = () => {
 
 window.setPayMode = (mode) => {
     selectedPaymentMode = mode;
-    document.querySelectorAll('.pay-modes button').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.pay-options button').forEach(b => b.classList.remove('selected'));
     document.getElementById('mode-' + mode.toLowerCase()).classList.add('selected');
     if(mode === 'Online') {
         document.getElementById('qr-area').style.display = "block";
@@ -96,18 +107,19 @@ window.setPayMode = (mode) => {
 
 window.confirmOrder = async () => {
     const name = document.getElementById('cust-name').value;
-    if(!name) return alert("Enter Name");
-    loader.style.display = "flex";
+    if(!name) return alert("Please enter your name!");
     
+    loader.style.display = "flex";
     const finalTotal = document.getElementById('final-amt').innerText;
     const orderData = {
         resId, table: tableNo, customerName: name, userUID,
         items: cart, total: finalTotal, status: "Pending",
-        paymentMode: selectedPaymentMode, timestamp: new Date()
+        paymentMode: selectedPaymentMode, timestamp: new Date(),
+        instruction: document.getElementById('chef-note').value
     };
 
     await addDoc(collection(db, "orders"), orderData);
-    
+
     // Update Loyalty
     const earned = Math.floor(finalTotal / 100) * 10;
     const userRef = doc(db, "users", userUID);
@@ -124,13 +136,52 @@ window.confirmOrder = async () => {
     loader.style.display = "none";
 };
 
-// Global UI Fixes
+// --- AUTH HANDLER ---
+window.handleAuth = async () => {
+    const email = document.getElementById('auth-email').value;
+    const pass = document.getElementById('auth-pass').value;
+    if(!email || !pass) return alert("Fill details");
+    
+    loader.style.display = "flex";
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        alert("Login successful!");
+        window.closeAuthModal();
+    } catch(e) {
+        try {
+            await createUserWithEmailAndPassword(auth, email, pass);
+            alert("Account created!");
+            window.closeAuthModal();
+        } catch(err) { alert(err.message); }
+    }
+    loader.style.display = "none";
+};
+
+// Tracking
+function checkLiveOrders() {
+    const q = query(collection(db, "orders"), where("userUID", "==", userUID));
+    onSnapshot(q, (snap) => {
+        const list = document.getElementById('live-tracking-list');
+        list.innerHTML = "";
+        snap.forEach(d => {
+            const o = d.data();
+            if(o.status !== "Picked Up") {
+                list.innerHTML += `<div class="tracking-item" style="padding:15px; border-bottom:1px solid #eee; text-align:left;">
+                    <b style="color:var(--primary)">Status: ${o.status}</b><br>Table ${o.table} | ₹${o.total}
+                </div>`;
+            }
+        });
+    });
+}
+
+// UI Modals
 window.openTracking = () => document.getElementById('trackingModal').style.display = "flex";
 window.closeTracking = () => document.getElementById('trackingModal').style.display = "none";
 window.openAuthModal = () => document.getElementById('authModal').style.display = "flex";
 window.closeAuthModal = () => document.getElementById('authModal').style.display = "none";
 window.closeModal = () => document.getElementById('paymentModal').style.display = "none";
-window.openOffersModal = () => alert("Current Offers: " + (restaurantData.offerText || "No offers"));
+window.closeAnnouncement = () => document.getElementById('announcement-modal').style.display = "none";
+window.openOffersModal = () => alert("Offers: " + (restaurantData.offerText || "No active offers today"));
 
 async function fetchLoyalty() {
     const snap = await getDoc(doc(db, "users", userUID));
@@ -157,23 +208,6 @@ function loadMenu() {
             </div>`;
         });
         loader.style.display = "none";
-    });
-}
-
-function checkLiveOrders() {
-    // Note: To avoid index errors, we query without sorting first
-    const q = query(collection(db, "orders"), where("userUID", "==", userUID));
-    onSnapshot(q, (snap) => {
-        const list = document.getElementById('live-tracking-list');
-        list.innerHTML = "";
-        snap.forEach(d => {
-            const o = d.data();
-            if(o.status !== "Picked Up") {
-                list.innerHTML += `<div style="padding:15px; border-bottom:1px solid #eee; text-align:left;">
-                    <b style="color:var(--primary)">${o.status}</b><br>Table ${o.table} | ₹${o.total}
-                </div>`;
-            }
-        });
     });
 }
 

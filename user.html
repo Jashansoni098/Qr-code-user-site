@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Platto | Digital Menu</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS & Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="user-style.css">
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -15,106 +17,107 @@
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
     <div class="app-wrapper">
-        <!-- Header -->
+        <!-- Header Section -->
         <header class="main-header">
-            <div class="header-top">
-                <img id="res-logo" src="https://via.placeholder.com/60" alt="Logo">
-                <div class="header-info">
+            <div class="header-flex">
+                <img id="res-logo" src="https://via.placeholder.com/60" alt="Logo" class="res-logo-img">
+                <div class="res-meta">
                     <h1 id="res-name-display">Loading...</h1>
-                    <div class="social-row">
+                    <div class="social-links">
                         <a id="link-fb" href="#"><i class="fab fa-facebook"></i></a>
                         <a id="link-ig" href="#"><i class="fab fa-instagram"></i></a>
                         <a id="link-yt" href="#"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
             </div>
-            <div class="info-badges">
+            <div class="header-badges">
                 <span class="badge">Table <b id="tbl-no">--</b></span>
                 <span class="badge">⏳ <b id="wait-time">20</b> min</span>
-                <div class="wifi-box" id="wifi-display" style="display:none;">
-                    <i class="fas fa-wifi"></i> <span id="wifi-name"></span> | <small id="wifi-pass"></small>
+                <div id="wifi-display" class="wifi-badge" style="display:none;">
+                    <i class="fas fa-wifi"></i> <span id="wifi-name">--</span> | <small id="wifi-pass">--</small>
                 </div>
             </div>
         </header>
 
         <!-- Loyalty Card -->
-        <section class="loyalty-section">
-            <div class="loyalty-card">
+        <section class="loyalty-box">
+            <div class="pts-container">
                 <div class="pts-circle">
                     <small>PTS</small>
                     <h2 id="user-pts">0</h2>
                 </div>
-                <div class="loyalty-details">
-                    <p>Earn 10 points on every ₹100 spent! 🎁</p>
+                <div class="pts-info">
+                    <p>Earn 10 points for every ₹100 spent! 🎁</p>
                     <button id="redeem-btn" onclick="window.redeemPoints()" disabled>Redeem 1000 Pts (-₹10)</button>
                 </div>
             </div>
         </section>
 
-        <!-- Menu Navigation -->
-        <div class="menu-nav">
-            <input type="text" id="menu-search" placeholder="Search delicious food..." onkeyup="window.filterMenu()">
+        <!-- Search & Filter -->
+        <div class="menu-sticky-nav">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="menu-search" placeholder="Search delicious food..." onkeyup="window.filterMenu()">
+            </div>
             <div class="nav-filters">
-                <label class="veg-label">
+                <label class="veg-toggle-ui">
                     <input type="checkbox" id="veg-toggle" onchange="window.filterMenu()">
-                    <span class="veg-indicator">Veg Only 🟢</span>
+                    <span class="veg-switch"></span> Veg Only 🟢
                 </label>
-                <button class="offers-pill" onclick="window.openOffersModal()"><i class="fas fa-percentage"></i> Offers</button>
+                <button class="offers-pill" onclick="window.openOffersModal()"><i class="fas fa-percent"></i> Offers</button>
             </div>
         </div>
 
         <!-- Menu List -->
         <main id="menu-list" class="food-container"></main>
 
-        <!-- About & Support -->
-        <section class="footer-info">
+        <!-- Footer / Support -->
+        <section class="footer-section">
             <h4>About Restaurant</h4>
-            <p id="res-about-text">...</p>
+            <p id="res-about-text">Loading details...</p>
             <div class="support-btns">
-                <a id="whatsapp-btn" href="#" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                <button onclick="window.openSupportModal()" class="btn-ticket"><i class="fas fa-headset"></i> Support Ticket</button>
+                <a id="whatsapp-btn" href="#" class="btn-wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                <button onclick="window.openSupportModal()" class="btn-ticket"><i class="fas fa-headset"></i> Support</button>
             </div>
         </section>
     </div>
 
-    <!-- BOTTOM NAV -->
-    <nav class="bottom-bar">
+    <!-- BOTTOM TAB NAVIGATION -->
+    <nav class="app-bottom-nav">
         <button onclick="window.scrollTo(0,0)" class="active"><i class="fas fa-utensils"></i><span>Menu</span></button>
-        <button onclick="window.openTracking()"><i class="fas fa-map-location-dot"></i><span>Track</span></button>
+        <button onclick="window.openTracking()"><i class="fas fa-clock-rotate-left"></i><span>Track</span></button>
         <button onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Profile</span></button>
     </nav>
 
-    <!-- FLOATING CART -->
-    <div id="cart-bar" class="cart-float" style="display:none;">
-        <div class="cart-left">
+    <!-- FLOATING CART BAR -->
+    <div id="cart-bar" class="cart-floating-bar" style="display:none;">
+        <div class="cart-details">
             <span id="cart-qty">0</span> Items | ₹<span id="cart-total">0</span>
         </div>
-        <button onclick="window.openPaymentModal()">View Cart →</button>
+        <button onclick="window.openPaymentModal()">Checkout →</button>
     </div>
 
-    <!-- MODALS -->
-    <!-- Announcement Modal -->
+    <!-- ALL MODALS (Fixed Placement) -->
     <div id="announcement-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <h2 id="ann-title">Special Announcement</h2>
-            <p id="ann-desc">...</p>
-            <button class="primary-btn" onclick="window.closeAnnouncement()">Okay, Thanks!</button>
+        <div class="modal-content ann-popup">
+            <h2 id="ann-title">Special Offer!</h2>
+            <p id="ann-desc"></p>
+            <button class="primary-btn" onclick="window.closeAnnouncement()">Explore Menu</button>
         </div>
     </div>
 
-    <!-- Tracking Modal -->
     <div id="trackingModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <h3>My Orders</h3>
+        <div class="modal-content full-modal">
+            <h3>My Orders Tracking</h3>
             <div id="live-tracking-list"></div>
             <button class="btn-close" onclick="window.closeTracking()">Close</button>
         </div>
     </div>
 
-    <!-- Auth Modal -->
     <div id="authModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <h2 id="auth-title">Login to Secure Points</h2>
+        <div class="modal-content auth-modal">
+            <h2 id="auth-title">Account Login</h2>
+            <p>Login to save your loyalty points securely.</p>
             <input type="email" id="auth-email" placeholder="Email" class="pro-input">
             <input type="password" id="auth-pass" placeholder="Password" class="pro-input">
             <button class="primary-btn" onclick="window.handleAuth()">Login / Sign Up</button>
@@ -122,29 +125,27 @@
         </div>
     </div>
 
-    <!-- Checkout Modal -->
     <div id="paymentModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <h3>Complete Order</h3>
-            <input type="text" id="cust-name" placeholder="Your Name" class="pro-input">
-            <div class="pay-modes">
-                <button onclick="window.setPayMode('Online')" id="mode-online">💳 Online</button>
-                <button onclick="window.setPayMode('Cash')" id="mode-cash">💵 Cash</button>
+        <div class="modal-content checkout-modal">
+            <h3>Final Checkout</h3>
+            <input type="text" id="cust-name" placeholder="Your Full Name" class="pro-input">
+            <div class="pay-options">
+                <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-btn-choice">💳 Online</button>
+                <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-btn-choice">💵 Cash</button>
             </div>
-            <div id="qr-area" style="display:none;">
-                <div id="payment-qr" style="display:flex; justify-content:center; margin:15px;"></div>
+            <div id="qr-area" style="display:none; padding:20px;">
+                <div id="payment-qr" style="display:flex; justify-content:center;"></div>
             </div>
-            <textarea id="chef-note" placeholder="Note: e.g. Extra spicy..."></textarea>
+            <textarea id="chef-note" placeholder="Special Instructions (e.g. No Spicy)"></textarea>
             <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
         </div>
     </div>
 
-    <!-- Success Screen -->
-    <div id="success-screen" class="success-screen" style="display:none;">
+    <div id="success-screen" class="success-screen-overlay" style="display:none;">
         <div class="success-card">
-            <i class="fas fa-check-circle" style="color:#22c55e; font-size:4rem;"></i>
+            <div class="check-icon">✓</div>
             <h1>Order Placed!</h1>
-            <p>Thank you <b id="s-name"></b>. Your order is sent to kitchen.</p>
+            <p>Thank you <b id="s-name"></b>. Your meal is being prepared.</p>
             <button class="primary-btn" onclick="location.reload()">Back to Menu</button>
         </div>
     </div>
