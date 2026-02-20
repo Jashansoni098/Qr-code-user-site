@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Platto | Digital Menu</title>
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="user-style.css">
-    <!-- Libraries -->
+    <!-- QR & PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -15,49 +14,47 @@
 
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
-    <!-- Live Tracking (Sirf active order par dikhega) -->
+    <!-- Live Tracking Banner -->
     <div id="tracking-banner" class="tracking-banner" style="display:none;">
         <div class="track-content">
-            <span id="track-status-icon">🍳</span>
+            <span id="track-status-icon">👨‍🍳</span>
             <div class="track-text">
-                <p id="track-status-text">Preparing your order...</p>
-                <small id="track-time-msg">Ready in 10-15 mins</small>
+                <p id="track-status-text">Order Received...</p>
+                <small id="track-time-msg">Ready in 15-20 mins</small>
             </div>
         </div>
-        <button id="download-bill-btn" onclick="generateInvoice()">Bill 📄</button>
+        <button id="download-bill-btn" onclick="generateInvoice()" style="display:none;">Bill 📄</button>
     </div>
 
     <div class="app-container">
-        <!-- Header Section -->
+        <!-- Restaurant Header -->
         <header class="main-header">
             <div class="header-top">
-                <img id="res-logo" src="https://via.placeholder.com/60" alt="Restaurant Logo">
+                <img id="res-logo" src="https://via.placeholder.com/60" alt="Logo">
                 <div class="header-info">
                     <h1 id="res-name-display">Loading...</h1>
                     <p id="res-address-display">...</p>
                 </div>
             </div>
             <div class="header-stats">
-                <span class="badge table-badge">Table <b id="tbl-no">--</b></span>
+                <span class="badge table-badge">Table <b id="tbl-no">01</b></span>
                 <span class="badge wait-badge">⏳ <b id="wait-time">20</b> min</span>
                 <span class="badge rating-badge">★ 4.8</span>
             </div>
         </header>
 
-        <!-- Loyalty Wallet -->
+        <!-- Loyalty Strip -->
         <section class="loyalty-strip">
             <div class="points-box">
-                <small>LOYALTY POINTS</small>
+                <small>POINTS</small>
                 <h3 id="user-pts">0</h3>
             </div>
-            <p class="offer-txt">Earn 10 points for every ₹100 spent! 🎁</p>
+            <p class="offer-txt">Earn 10 points for every ₹100 spent! 🎁<br>1000 Pts = ₹10 Discount</p>
         </section>
 
-        <!-- Menu Filters -->
+        <!-- Search & Filter -->
         <div class="filter-bar">
-            <div class="search-box">
-                <input type="text" placeholder="Search dish..." id="menu-search" onkeyup="filterMenu()">
-            </div>
+            <input type="text" placeholder="Search for a dish..." id="menu-search" onkeyup="filterMenu()">
             <label class="veg-toggle-label">
                 <input type="checkbox" id="veg-toggle" onchange="filterMenu()">
                 <span class="veg-btn">Veg Only 🟢</span>
@@ -65,9 +62,7 @@
         </div>
 
         <!-- Menu Grid -->
-        <main id="menu-list" class="menu-items-list">
-            <!-- Dynamic Food Cards -->
-        </main>
+        <main id="menu-list" class="menu-items-list"></main>
 
         <!-- About Section -->
         <section class="about-res">
@@ -79,72 +74,67 @@
         </section>
     </div>
 
-    <!-- Bottom Cart Bar -->
+    <!-- Sticky Cart Bar -->
     <footer id="cart-bar" class="floating-cart" style="display:none;">
         <div class="cart-info">
             <span id="cart-qty">0 Items</span>
             <b>₹<span id="cart-total">0</span></b>
         </div>
-        <button class="checkout-btn" onclick="openPaymentModal()">View Cart →</button>
+        <button class="checkout-btn" onclick="openPaymentModal()">Checkout →</button>
     </footer>
 
-   <!-- Payment Modal (Updated with Name and Options) -->
-<div id="paymentModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3 id="modal-title">Complete Your Order</h3>
-        
-        <!-- Step 1: User Details -->
-        <div class="input-group-user">
-            <label>Your Name</label>
-            <input type="text" id="cust-name" placeholder="Enter your full name">
-        </div>
+    <!-- Checkout Modal -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Complete Order</h3>
+            
+            <div class="input-group-user">
+                <label>Your Name</label>
+                <input type="text" id="cust-name" placeholder="Enter your full name">
+            </div>
 
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+            <p style="font-weight: 700; margin: 15px 0 10px;">Select Payment Mode</p>
+            <div class="payment-options">
+                <button onclick="selectPaymentMode('Online')" id="btn-pay-online" class="pay-choice-btn">💳 Online</button>
+                <button onclick="selectPaymentMode('Cash')" id="btn-pay-cash" class="pay-choice-btn">💵 Cash</button>
+            </div>
 
-        <!-- Step 2: Payment Choice -->
-        <p style="font-weight: 700; margin-bottom: 15px;">Choose Payment Mode</p>
-        <div class="payment-options">
-            <button onclick="selectPaymentMode('Online')" id="btn-pay-online" class="pay-choice-btn">
-                <span>💳</span> Online Payment
-            </button>
-            <button onclick="selectPaymentMode('Cash')" id="btn-pay-cash" class="pay-choice-btn">
-                <span>💵</span> Cash at Counter
-            </button>
-        </div>
+            <div id="online-qr-section" style="display:none; margin-top:15px;">
+                <div id="payment-qr" class="qr-preview"></div>
+                <p class="upi-display" id="display-upi-id">---</p>
+                <button onclick="copyUPI()" class="copy-btn">Copy UPI ID</button>
+            </div>
 
-        <!-- Online Payment QR (Initially hidden) -->
-        <div id="online-qr-section" style="display:none; margin-top:20px;">
-            <p style="font-size: 0.8rem; color: gray;">Scan & Pay to Restaurant UPI</p>
-            <div id="payment-qr" class="qr-preview"></div>
-            <p class="upi-display" id="display-upi-id">---</p>
-            <button onclick="copyUPI()" class="copy-btn">Copy UPI ID</button>
-        </div>
+            <div id="cash-msg-section" style="display:none; margin-top:15px;" class="alert-box-info">
+                ⚠️ Confirm karne ke baad counter se bill receipt le lijiye.
+            </div>
 
-        <!-- Cash Message (Initially hidden) -->
-        <div id="cash-msg-section" style="display:none; margin-top:20px;" class="alert-box-info">
-            ⚠️ Order confirmation ke liye counter se apne bill ki receipt le lijiye.
-        </div>
+            <div id="loyalty-discount-msg" class="discount-banner" style="display:none;">
+                🎉 1000 Points! ₹10 Discount applied.
+            </div>
 
-        <div class="modal-actions" style="margin-top:25px;">
-            <button id="final-confirm-btn" onclick="confirmOrder()" class="btn-confirm" disabled>Place Order (₹<span id="final-amt">0</span>)</button>
-            <button onclick="closeModal()" class="btn-close">Cancel</button>
+            <textarea id="chef-instruction" class="chef-note" placeholder="Note: e.g. Less spicy, No onion..."></textarea>
+
+            <div class="modal-actions">
+                <button id="final-confirm-btn" onclick="confirmOrder()" class="btn-confirm" disabled>Place Order (₹<span id="final-amt">0</span>)</button>
+                <button onclick="closeModal()" class="btn-close">Cancel</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Thank You / Success Overlay -->
-<div id="success-screen" class="success-overlay" style="display:none;">
-    <div class="success-card">
-        <div class="success-icon">🎉</div>
-        <h1>Thank You!</h1>
-        <p>Aapka order successfully place ho gaya hai.</p>
-        <div class="order-summary-box">
-            <p>Customer: <b id="summary-name"></b></p>
-            <p>Table: <b id="summary-table"></b></p>
+    <!-- Success Screen -->
+    <div id="success-screen" class="success-overlay" style="display:none;">
+        <div class="success-card">
+            <div class="success-icon">🎉</div>
+            <h1>Thank You!</h1>
+            <p>Aapka order successfully place ho gaya hai.</p>
+            <div class="order-summary-box">
+                <p>Customer: <b id="summary-name"></b></p>
+                <p>Table: <b id="summary-table"></b></p>
+            </div>
+            <button class="primary-btn" onclick="closeSuccess()">Back to Menu</button>
         </div>
-        <button class="primary-btn" onclick="closeSuccess()">Back to Menu</button>
     </div>
-</div>
 
     <script type="module" src="user-script.js"></script>
 </body>
