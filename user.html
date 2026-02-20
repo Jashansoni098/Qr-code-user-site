@@ -3,74 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Platto | Digital Menu</title>
+    <title>Platto | Digital Menu & Tracking</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="user-style.css">
-    <!-- QR Library for Payment QR -->
+    <!-- QR & PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
-    <!-- Header & Info -->
+    <!-- 1. LIVE ORDER TRACKING BANNER (Feature 1) -->
+    <div id="tracking-banner" class="tracking-card" style="display:none;">
+        <div class="track-info">
+            <span id="track-status-icon">👨‍🍳</span>
+            <div>
+                <h4 id="track-status-text">Preparing your meal...</h4>
+                <small id="track-time-msg">Estimated Wait: 15 Mins</small>
+            </div>
+        </div>
+        <button id="download-bill-btn" style="display:none;" onclick="generateInvoice()">Download Bill 📄</button>
+    </div>
+
+    <!-- Header & Loyalty (Feature 3 & 5) -->
     <header class="app-header">
         <div class="res-branding">
             <img id="res-logo" src="https://via.placeholder.com/80" alt="Logo">
             <div class="res-text">
                 <h1 id="res-name-display">Loading...</h1>
-                <p id="res-address">Please wait...</p>
+                <p id="wait-time-badge">⏳ Average Wait: -- Mins</p>
                 <div class="header-tags">
-                    <span id="table-badge">Table 01</span>
-                    <span class="rating-badge">★ 4.5</span>
+                    <span id="table-badge">Table --</span>
+                    <span class="rating-badge">★ 4.8</span>
                 </div>
             </div>
         </div>
-        <a id="call-btn" href="tel:" class="call-circle">📞</a>
+        <div class="wallet-card">
+            <small>Loyalty Points</small>
+            <div id="user-pts">0</div>
+        </div>
     </header>
 
-    <!-- Offers Section -->
-    <section class="offers-container">
-        <div class="offer-card">
-            <div class="offer-info">
-                <h3>Flat 10% OFF</h3>
-                <p>On first order | Code: PLATTO10</p>
-            </div>
-            <img src="https://cdn-icons-png.flaticon.com/512/2331/2331102.png" width="50">
+    <!-- Support & Floating WhatsApp (Feature 8) -->
+    <a id="whatsapp-btn" href="#" target="_blank" class="float-wa">
+        <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" width="35">
+    </a>
+
+    <!-- Filters & Veg Toggle (Feature 2) -->
+    <section class="menu-controls">
+        <div class="search-box">
+            <input type="text" placeholder="Search for dishes..." id="menu-search">
+        </div>
+        <div class="filter-row">
+            <label class="switch">
+                <input type="checkbox" id="veg-toggle" onchange="filterMenu()">
+                <span class="slider round"></span>
+            </label>
+            <span>Veg Only</span>
         </div>
     </section>
 
-    <!-- Categories -->
-    <div class="categories-nav">
-        <button class="cat-chip active">All</button>
-        <button class="cat-chip">Best Sellers</button>
-        <button class="cat-chip">Veg</button>
-        <button class="cat-chip">Drinks</button>
-    </div>
-
     <!-- Menu List -->
-    <main id="menu-list" class="food-list">
-        <!-- Items will be injected by JS -->
+    <main id="menu-container" class="food-list">
+        <!-- Categories and Items will be injected here -->
     </main>
 
-    <!-- Bottom Bar -->
+    <!-- About Restaurant (Feature 9) -->
+    <section class="about-res-section">
+        <h3>About Us</h3>
+        <p id="res-about-text">Loading information...</p>
+        <div class="social-links">
+            <a href="#">Instagram</a> | <a href="#">Facebook</a>
+        </div>
+    </section>
+
+    <!-- Cart Bar -->
     <footer id="cart-bar" class="cart-bar" style="display:none;">
         <div class="cart-details">
             <span id="cart-qty">0 Items</span>
             <span class="price-text">Total: <b id="cart-total">₹0</b></span>
         </div>
-        <button onclick="openPaymentModal()" class="checkout-btn">Checkout →</button>
+        <button onclick="openPaymentModal()" class="checkout-btn">Proceed →</button>
     </footer>
 
-    <!-- Payment Modal -->
+    <!-- Payment Modal (Feature 4) -->
     <div id="paymentModal" class="modal">
         <div class="modal-content">
-            <h3>Scan & Pay</h3>
-            <p>Direct payment to restaurant</p>
+            <h3>Final Checkout</h3>
+            <div id="loyalty-discount-msg" class="discount-alert" style="display:none;">
+                🎁 1000 Points Reached! ₹10 Discount Applied.
+            </div>
             <div id="payment-qr" class="qr-container"></div>
-            <p class="upi-id">UPI: <span id="display-upi">--</span></p>
-            <button onclick="closeModal()" class="close-btn">Close</button>
-            <button onclick="confirmOrder()" class="confirm-btn">I've Paid Online</button>
+            <p>Payable: <b id="final-amt">₹0</b></p>
+            
+            <div class="chef-note">
+                <textarea id="chef-instruction" placeholder="Instructions for Chef (e.g. Less Spicy)"></textarea>
+            </div>
+
+            <div class="payment-btns">
+                <button onclick="payViaUPI()" class="upi-pay-btn">Pay with GPay/PhonePe</button>
+                <button onclick="confirmOrder()" class="confirm-btn">I've Paid Online</button>
+                <button onclick="closeModal()" class="close-btn">Cancel</button>
+            </div>
         </div>
     </div>
 
