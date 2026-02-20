@@ -1,51 +1,40 @@
-:root { --primary: #e11d48; --dark: #0f172a; --gray: #64748b; --veg: #22c55e; --white: #ffffff; }
+:root { --primary: #e11d48; --dark: #0f172a; --white: #ffffff; --veg: #22c55e; --accent: #6366f1; }
 
-body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #f8fafc; color: var(--dark); overflow-x: hidden; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #f8fafc; padding-bottom: 80px; }
 
-.app-container { max-width: 500px; margin: 0 auto; background: var(--white); min-height: 100vh; }
+/* Bottom Navigation */
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 2000; }
+.bottom-nav button { background: none; border: none; color: #94a3b8; font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 5px; font-weight: 700; }
+.bottom-nav button i { font-size: 1.2rem; }
+.bottom-nav button.active { color: var(--primary); }
 
-/* Header & Logo */
-#res-logo { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; border: 1px solid #eee; }
-.main-header { padding: 25px 20px; border-bottom: 1px solid #f1f5f9; }
-.header-top { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
-.header-info h1 { margin: 0; font-size: 1.3rem; font-weight: 800; }
-.header-stats { display: flex; gap: 8px; }
-.badge { padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; background: #f1f5f9; }
+/* Header & Socials */
+.social-links { display: flex; gap: 12px; margin-top: 5px; }
+.social-links a { color: #64748b; font-size: 1.1rem; }
+.wifi-info { background: #f1f5f9; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; margin-left: 10px; color: var(--accent); }
 
-/* Loyalty & Strip */
-.loyalty-strip { margin: 0 20px; background: linear-gradient(135deg, #fff1f2, #ffe4e6); border-radius: 15px; padding: 15px; display: flex; align-items: center; gap: 15px; border: 1px solid #fecdd3; }
-.points-box h3 { margin: 0; color: var(--primary); font-size: 1.4rem; }
-.offer-txt { font-size: 0.7rem; font-weight: 600; color: #be123c; }
+/* Buttons Pro */
+.wa-pro-btn, .support-pro-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; font-family: inherit; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+.wa-pro-btn { background: #25d366; color: white; }
+.support-pro-btn { background: #f1f5f9; color: var(--dark); }
+.support-actions { display: flex; gap: 10px; margin-top: 20px; }
 
-/* Menu Grid */
-.filter-bar { padding: 15px 20px; position: sticky; top: 0; background: var(--white); z-index: 100; border-bottom: 1px solid #f1f5f9; }
-#menu-search { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 10px; }
-.food-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; }
-.add-btn { background: var(--white); border: 1px solid #e2e8f0; color: var(--primary); padding: 8px 18px; border-radius: 10px; font-weight: 800; cursor: pointer; }
+/* Announcement & Modals */
+.announcement-card { border-radius: 25px; padding: 30px; animation: slideUp 0.4s ease; }
+.close-popup { position: absolute; top: 15px; right: 20px; font-size: 2rem; cursor: pointer; color: #94a3b8; }
 
-/* Floating Cart */
-.floating-cart { position: fixed; bottom: 20px; left: 20px; right: 20px; background: var(--dark); color: white; padding: 15px 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-.checkout-btn { background: var(--primary); border: none; color: white; padding: 12px 20px; border-radius: 12px; font-weight: 800; }
+/* Tracking Card */
+.tracking-item { background: #f8fafc; padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 5px solid var(--primary); }
+.status-badge { float: right; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; color: white; background: var(--primary); }
 
-/* Modal & Selection */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: flex-end; }
-.modal-content { background: white; width: 100%; max-width: 500px; padding: 30px 20px; border-radius: 30px 30px 0 0; text-align: center; max-height: 90vh; overflow-y: auto; }
-.payment-options { display: flex; gap: 10px; }
-.pay-choice-btn { flex: 1; padding: 15px; border-radius: 15px; border: 2px solid #eee; background: white; font-weight: 700; cursor: pointer; }
-.pay-choice-btn.selected { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
-.qr-preview { margin: 15px auto; width: 150px; height: 150px; }
-.btn-confirm { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 800; margin-top: 15px; }
-.btn-confirm:disabled { background: #cbd5e1; }
-.chef-note { width: 100%; height: 60px; padding: 10px; margin-top: 15px; border-radius: 10px; border: 1px solid #ddd; font-family: inherit; }
+/* Loyalty Button */
+#redeem-btn { margin-top: 5px; background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; opacity: 0.5; }
+#redeem-btn.active { opacity: 1; cursor: pointer; }
 
-/* Success Overlay */
-.success-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; display: none; justify-content: center; align-items: center; flex-direction: column; text-align: center; }
-.success-icon { font-size: 5rem; margin-bottom: 20px; }
-.order-summary-box { background: #f8fafc; padding: 20px; border-radius: 15px; margin: 20px; border: 1px dashed #ccc; }
+/* Animations */
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-/* Utils */
-.loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index: 9999; display:flex; justify-content:center; align-items:center; }
-.spinner { width: 35px; height: 35px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-.tracking-banner { position: fixed; top: 10px; left: 10px; right: 10px; background: var(--dark); color: white; padding: 12px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; z-index: 2001; border-left: 5px solid var(--primary); }
+/* Fixed Items */
+#res-logo { width: 60px; height: 60px; border-radius: 15px; object-fit: cover; }
+.menu-items-list { padding: 15px 20px; }
+.food-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }

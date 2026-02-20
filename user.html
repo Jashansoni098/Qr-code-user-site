@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Platto | Digital Menu</title>
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="user-style.css">
-    <!-- QR & PDF Libraries -->
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -14,110 +16,141 @@
 
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
-    <!-- Live Tracking Banner -->
-    <div id="tracking-banner" class="tracking-banner" style="display:none;">
-        <div class="track-content">
-            <span id="track-status-icon">👨‍🍳</span>
-            <div class="track-text">
-                <p id="track-status-text">Order Received...</p>
-                <small id="track-time-msg">Ready in 15-20 mins</small>
-            </div>
+    <!-- 1. ANNOUNCEMENT POP-UP (Feature 10) -->
+    <div id="announcement-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content announcement-card">
+            <div class="close-popup" onclick="closeAnnouncement()">&times;</div>
+            <img id="announcement-img" src="" alt="Offer" style="display:none; width:100%; border-radius:15px;">
+            <h2 id="announcement-title">Special Offer!</h2>
+            <p id="announcement-desc">Loading special deals for you...</p>
+            <button class="primary-btn" onclick="closeAnnouncement()">View Menu</button>
         </div>
-        <button id="download-bill-btn" onclick="generateInvoice()" style="display:none;">Bill 📄</button>
+    </div>
+
+    <!-- 2. TRACKING OVERLAY (Feature 1) -->
+    <div id="tracking-panel" class="modal-overlay" style="display:none;">
+        <div class="modal-content tracking-content">
+            <div class="close-popup" onclick="closeTracking()">&times;</div>
+            <h3>My Orders Tracking</h3>
+            <div id="live-tracking-list">
+                <!-- Live Order Tracking Cards -->
+            </div>
+            <button class="btn-close" onclick="closeTracking()">Close</button>
+        </div>
     </div>
 
     <div class="app-container">
-        <!-- Restaurant Header -->
+        <!-- Header Section -->
         <header class="main-header">
             <div class="header-top">
                 <img id="res-logo" src="https://via.placeholder.com/60" alt="Logo">
                 <div class="header-info">
                     <h1 id="res-name-display">Loading...</h1>
-                    <p id="res-address-display">...</p>
+                    <div class="social-links">
+                        <a id="link-fb" href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a id="link-ig" href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a id="link-yt" href="#" target="_blank"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="auth-icon" onclick="openAuthModal()">
+                    <i class="fas fa-user-circle"></i>
                 </div>
             </div>
             <div class="header-stats">
-                <span class="badge table-badge">Table <b id="tbl-no">01</b></span>
-                <span class="badge wait-badge">⏳ <b id="wait-time">20</b> min</span>
-                <span class="badge rating-badge">★ 4.8</span>
+                <span class="badge table-badge">T- <b id="tbl-no">01</b></span>
+                <span class="badge wait-badge">⏳ <b id="wait-time">--</b> min</span>
+                <div class="wifi-info" id="wifi-box">
+                    <i class="fas fa-wifi"></i> <span id="wifi-name">--</span> | <small id="wifi-pass">--</small>
+                </div>
             </div>
         </header>
 
-        <!-- Loyalty Strip -->
+        <!-- Loyalty Wallet -->
         <section class="loyalty-strip">
             <div class="points-box">
-                <small>POINTS</small>
+                <small>MY POINTS</small>
                 <h3 id="user-pts">0</h3>
             </div>
-            <p class="offer-txt">Earn 10 points for every ₹100 spent! 🎁<br>1000 Pts = ₹10 Discount</p>
+            <div class="loyalty-text">
+                <p>₹100 = 10 Pts | 1000 Pts = ₹10 Discount 🎁</p>
+                <button id="redeem-btn" onclick="redeemPoints()" disabled>Redeem Now</button>
+            </div>
         </section>
 
-        <!-- Search & Filter -->
+        <!-- Search & Filter Bar -->
         <div class="filter-bar">
-            <input type="text" placeholder="Search for a dish..." id="menu-search" onkeyup="filterMenu()">
-            <label class="veg-toggle-label">
-                <input type="checkbox" id="veg-toggle" onchange="filterMenu()">
-                <span class="veg-btn">Veg Only 🟢</span>
-            </label>
+            <input type="text" placeholder="Search dishes..." id="menu-search" onkeyup="filterMenu()">
+            <div class="filter-btns">
+                <label class="veg-toggle">
+                    <input type="checkbox" id="veg-toggle" onchange="filterMenu()">
+                    <span class="veg-btn">Veg 🟢</span>
+                </label>
+                <button class="offers-nav-btn" onclick="showOffers()"><i class="fas fa-percentage"></i> Offers</button>
+            </div>
         </div>
 
         <!-- Menu Grid -->
-        <main id="menu-list" class="menu-items-list"></main>
+        <main id="menu-list" class="menu-items-list">
+            <!-- Dishes injected here -->
+        </main>
 
-        <!-- About Section -->
-        <section class="about-res">
+        <!-- About & Professional Support -->
+        <section class="footer-info">
             <h4>About Restaurant</h4>
             <p id="res-about-text">...</p>
-            <div class="social-btns">
-                <a id="whatsapp-btn" href="#" target="_blank" class="wa-btn">WhatsApp Support</a>
+            <div class="support-actions">
+                <a id="whatsapp-btn" href="#" target="_blank" class="wa-pro-btn">
+                    <i class="fab fa-whatsapp"></i> WhatsApp Support
+                </a>
+                <button onclick="openSupportTicket()" class="support-pro-btn">
+                    <i class="fas fa-headset"></i> Raise Ticket
+                </button>
             </div>
         </section>
     </div>
 
-    <!-- Sticky Cart Bar -->
-    <footer id="cart-bar" class="floating-cart" style="display:none;">
-        <div class="cart-info">
-            <span id="cart-qty">0 Items</span>
-            <b>₹<span id="cart-total">0</span></b>
-        </div>
-        <button class="checkout-btn" onclick="openPaymentModal()">Checkout →</button>
-    </footer>
+    <!-- 3. BOTTOM NAVIGATION (App Style) -->
+    <nav class="bottom-nav">
+        <button onclick="scrollToTop()" class="active"><i class="fas fa-book-open"></i><span>Menu</span></button>
+        <button onclick="openOffersModal()"><i class="fas fa-tags"></i><span>Offers</span></button>
+        <button onclick="openTracking()"><i class="fas fa-clock-rotate-left"></i><span>Track</span></button>
+        <button onclick="openAuthModal()"><i class="fas fa-user"></i><span>Profile</span></button>
+    </nav>
 
-    <!-- Checkout Modal -->
-    <div id="paymentModal" class="modal-overlay">
+    <!-- 4. CHECKOUT MODAL -->
+    <div id="paymentModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <h3>Complete Order</h3>
-            
-            <div class="input-group-user">
-                <label>Your Name</label>
-                <input type="text" id="cust-name" placeholder="Enter your full name">
-            </div>
-
-            <p style="font-weight: 700; margin: 15px 0 10px;">Select Payment Mode</p>
+            <h3>Final Order</h3>
+            <div id="loyalty-applied" class="discount-banner" style="display:none;">Redeeming 1000 Pts: -₹10 Applied</div>
+            <input type="text" id="cust-name" placeholder="Your Name" class="pro-input">
             <div class="payment-options">
                 <button onclick="selectPaymentMode('Online')" id="btn-pay-online" class="pay-choice-btn">💳 Online</button>
                 <button onclick="selectPaymentMode('Cash')" id="btn-pay-cash" class="pay-choice-btn">💵 Cash</button>
             </div>
-
-            <div id="online-qr-section" style="display:none; margin-top:15px;">
+            <div id="online-qr-section" style="display:none;">
                 <div id="payment-qr" class="qr-preview"></div>
-                <p class="upi-display" id="display-upi-id">---</p>
-                <button onclick="copyUPI()" class="copy-btn">Copy UPI ID</button>
+                <button onclick="copyUPI()" class="copy-btn">Copy UPI</button>
             </div>
-
-            <div id="cash-msg-section" style="display:none; margin-top:15px;" class="alert-box-info">
-                ⚠️ Confirm karne ke baad counter se bill receipt le lijiye.
-            </div>
-
-            <div id="loyalty-discount-msg" class="discount-banner" style="display:none;">
-                🎉 1000 Points! ₹10 Discount applied.
-            </div>
-
-            <textarea id="chef-instruction" class="chef-note" placeholder="Note: e.g. Less spicy, No onion..."></textarea>
-
+            <textarea id="chef-instruction" class="chef-note" placeholder="Note to chef..."></textarea>
             <div class="modal-actions">
-                <button id="final-confirm-btn" onclick="confirmOrder()" class="btn-confirm" disabled>Place Order (₹<span id="final-amt">0</span>)</button>
+                <button id="final-confirm-btn" onclick="confirmOrder()" class="btn-confirm" disabled>Place Order ₹<span id="final-amt">0</span></button>
                 <button onclick="closeModal()" class="btn-close">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. AUTH MODAL (Login/Signup) -->
+    <div id="authModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content auth-box">
+            <div class="close-popup" onclick="closeAuthModal()">&times;</div>
+            <h2 id="auth-title">Login to Secure Points</h2>
+            <input type="email" id="auth-email" placeholder="Email">
+            <input type="password" id="auth-pass" placeholder="Password">
+            <button class="primary-btn" onclick="handleAuth()">Submit</button>
+            <p onclick="toggleAuthMode()" class="toggle-auth">Switch Login/Signup</p>
+            <div id="order-history-section" style="display:none; margin-top:20px;">
+                <h4>Your Past Orders</h4>
+                <div id="history-list"></div>
             </div>
         </div>
     </div>
@@ -125,14 +158,9 @@
     <!-- Success Screen -->
     <div id="success-screen" class="success-overlay" style="display:none;">
         <div class="success-card">
-            <div class="success-icon">🎉</div>
-            <h1>Thank You!</h1>
-            <p>Aapka order successfully place ho gaya hai.</p>
-            <div class="order-summary-box">
-                <p>Customer: <b id="summary-name"></b></p>
-                <p>Table: <b id="summary-table"></b></p>
-            </div>
-            <button class="primary-btn" onclick="closeSuccess()">Back to Menu</button>
+            <h1>🎉 Order Placed!</h1>
+            <p id="summary-text"></p>
+            <button class="primary-btn" onclick="closeSuccess()">Continue</button>
         </div>
     </div>
 
