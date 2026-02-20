@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, collection, onSnapshot, addDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const urlParams = new URLSearchParams(window.location.search);
 const resId = urlParams.get('resId');
@@ -8,42 +8,42 @@ const tableNo = urlParams.get('table') || "01";
 let cart = [];
 let total = 0;
 let restaurantData = {};
-let userUID = localStorage.getItem('platto_uid') || "user_" + Math.floor(Math.random() * 1000000);
+let userUID = localStorage.getItem('platto_uid') || "u_" + Date.now();
 localStorage.setItem('platto_uid', userUID);
 
-// Initialize App
-async function init() {
-    if(!resId) {
-        document.body.innerHTML = "<h1 style='text-align:center; padding:50px;'>Invalid QR ❌</h1>";
+// --- Initialization ---
+async function initApp() {
+    if (!resId) {
+        document.body.innerHTML = "<div style='text-align:center; padding:100px;'><h3>⚠️ Please scan the QR code at your table.</h3></div>";
         return;
     }
 
-    // 1. Fetch Restaurant Settings (Feature 5, 8, 9)
+    // 1. Fetch Restaurant Data
     const resRef = doc(db, "restaurants", resId);
     const resSnap = await getDoc(resRef);
-    if(resSnap.exists()) {
+    if (resSnap.exists()) {
         restaurantData = resSnap.data();
         document.getElementById('res-name-display').innerText = restaurantData.name;
-        document.getElementById('wait-time-badge').innerText = `⏳ Average Wait: ${restaurantData.prepTime || '20'} Mins`;
-        document.getElementById('res-about-text').innerText = restaurantData.about || "Welcome to our digital menu experience.";
-        document.getElementById('table-badge').innerText = `Table ${tableNo}`;
-        if(restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
+        document.getElementById('res-address-display').innerText = restaurantData.address || "Digital Menu Enabled";
+        document.getElementById('wait-time').innerText = restaurantData.prepTime || "20";
+        document.getElementById('res-about-text').innerText = restaurantData.about || "Enjoy our authentic food experience.";
+        document.getElementById('tbl-no').innerText = tableNo;
+        if (restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
         
-        // WhatsApp Link (Feature 8)
+        // WhatsApp button
         document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
     }
 
-    // 2. Fetch User Loyalty Points (Feature 3)
+    // 2. Load Loyalty Points
     fetchLoyalty();
 
-    // 3. Menu Real-time + Filtering (Feature 2)
+    // 3. Real-time Menu
     loadMenu();
 
-    // 4. Live Tracking Check (Feature 1 & 10)
-    checkLiveOrder();
+    // 4. Order Tracking
+    checkLiveOrders();
 }
 
-// Feature 3: Loyalty Logic
 async function fetchLoyalty() {
     const userRef = doc(db, "users", userUID);
     const userSnap = await getDoc(userRef);
@@ -51,146 +51,119 @@ async function fetchLoyalty() {
     document.getElementById('user-pts').innerText = pts;
 }
 
-// Feature 2: Menu Categorization
 function loadMenu() {
     const menuRef = collection(db, "restaurants", resId, "menu");
     onSnapshot(menuRef, (snapshot) => {
-        const container = document.getElementById('menu-container');
+        const container = document.getElementById('menu-list');
         container.innerHTML = "";
-        
         const isVegOnly = document.getElementById('veg-toggle').checked;
-        
+
         snapshot.forEach(d => {
             const item = d.data();
-            // Filter logic (Simple check: if name contains 'veg' or custom field)
-            if(isVegOnly && !item.name.toLowerCase().includes('veg')) return;
+            // Filter logic
+            if (isVegOnly && !item.name.toLowerCase().includes('veg')) return;
 
             container.innerHTML += `
                 <div class="food-card">
                     <div class="food-details">
                         <h4>${item.name}</h4>
-                        <div class="price-tag">₹${item.price}</div>
+                        <div class="food-price">₹${item.price}</div>
                     </div>
-                    <button class="add-btn" onclick="addToCart('${item.name}', ${item.price})">ADD +</button>
-                </div>
-            `;
+                    <button class="add-btn" onclick="addToCart('${item.name}', ${item.price})">ADD</button>
+                </div>`;
         });
         document.getElementById('loader').style.display = 'none';
     });
 }
 
 window.addToCart = (name, price) => {
-    cart.push({name, price});
+    cart.push({ name, price });
     total += parseInt(price);
-    document.getElementById('cart-bar').style.display = 'flex';
-    document.getElementById('cart-qty').innerText = `${cart.length} Items`;
-    document.getElementById('cart-total').innerText = `₹${total}`;
+    updateCartUI();
 };
 
-// Feature 4: UPI Deep Linking
-window.payViaUPI = () => {
-    if(!restaurantData.upiId) return alert("Online payment not set by restaurant.");
-    
-    let finalAmt = total;
+function updateCartUI() {
+    if (cart.length > 0) {
+        document.getElementById('cart-bar').style.display = 'flex';
+        document.getElementById('cart-qty').innerText = `${cart.length} Items`;
+        document.getElementById('cart-total').innerText = total;
+    }
+}
+
+// --- Order & Payment ---
+window.openPaymentModal = () => {
+    document.getElementById('paymentModal').style.display = 'flex';
+    document.getElementById('final-amt').innerText = total;
     const pts = parseInt(document.getElementById('user-pts').innerText);
-    if(pts >= 1000) finalAmt -= 10; // Auto-discount logic
+    if(pts >= 1000) document.getElementById('loyalty-discount-msg').style.display = 'block';
 
-    const upiUrl = `upi://pay?pa=${restaurantData.upiId}&pn=${restaurantData.name}&am=${finalAmt}&cu=INR`;
-    window.location.href = upiUrl;
+    // UPI QR
+    const qrDiv = document.getElementById('payment-qr');
+    qrDiv.innerHTML = "";
+    const upiLink = `upi://pay?pa=${restaurantData.upiId}&pn=${restaurantData.name}&am=${total}&cu=INR`;
+    new QRCode(qrDiv, { text: upiLink, width: 150, height: 150 });
 };
 
-// Feature 1 & 10: Live Tracking (Session Management)
-function checkLiveOrder() {
-    const q = query(collection(db, "orders"), 
-              where("resId", "==", resId), 
-              where("table", "==", tableNo),
-              where("status", "!=", "Done"));
+window.payViaUPI = () => {
+    const upiLink = `upi://pay?pa=${restaurantData.upiId}&pn=${restaurantData.name}&am=${total}&cu=INR`;
+    window.location.href = upiLink;
+};
 
-    onSnapshot(q, (snapshot) => {
-        if(!snapshot.empty) {
-            const order = snapshot.docs[0].data();
-            const banner = document.getElementById('tracking-banner');
-            banner.style.display = 'flex';
-            
-            document.getElementById('track-status-text').innerText = getStatusMsg(order.status);
-            
-            // Feature 7: Show Bill button if Ready/Picked Up
-            if(order.status === "Ready" || order.status === "Picked Up") {
-                document.getElementById('download-bill-btn').style.display = 'block';
-                window.currentOrderForBill = order;
-            }
-        }
-    });
-}
-
-function getStatusMsg(s) {
-    if(s === "Pending") return "Order Received! Awaiting Chef...";
-    if(s === "Preparing") return "Chef is cooking your meal... 🔥";
-    if(s === "Ready") return "Food is Ready! Please collect. ✅";
-    if(s === "Picked Up") return "Enjoy your meal! 😋";
-    return "Status Update...";
-}
-
-// Feature 6 & 7: Order & Loyalty Earning
 window.confirmOrder = async () => {
-    const note = document.getElementById('chef-instruction').value;
+    const instruction = document.getElementById('chef-instruction').value;
     const orderData = {
         resId, table: tableNo, items: cart, total, 
         status: "Pending", timestamp: new Date(), 
-        instruction: note, userUID
+        instruction, userUID
     };
 
-    const docRef = await addDoc(collection(db, "orders"), orderData);
-    
-    // Earn Points: ₹100 = 10 Points
+    await addDoc(collection(db, "orders"), orderData);
+
+    // Update Loyalty (10 pts for every 100)
     const earned = Math.floor(total / 100) * 10;
     const userRef = doc(db, "users", userUID);
     const userSnap = await getDoc(userRef);
     let currentPts = userSnap.exists() ? userSnap.data().points : 0;
-    
-    // Redeem if pts > 1000 (Already applied in UI total)
     if(currentPts >= 1000) currentPts -= 1000;
-
     await setDoc(userRef, { points: currentPts + earned }, { merge: true });
 
-    alert("Order Sent to Kitchen!");
+    alert("Order successfully sent to kitchen!");
     location.reload();
 };
 
-// Feature 7: Digital Invoice (jspdf)
+// --- Live Tracking ---
+function checkLiveOrders() {
+    const q = query(collection(db, "orders"), where("userUID", "==", userUID), where("status", "!=", "Picked Up"));
+    onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+            const order = snapshot.docs[0].data();
+            const banner = document.getElementById('tracking-banner');
+            banner.style.display = 'flex';
+            document.getElementById('track-status-text').innerText = getMsg(order.status);
+            if(order.status === "Ready") document.getElementById('download-bill-btn').style.display = 'block';
+            window.activeOrder = order;
+        }
+    });
+}
+
+function getMsg(s) {
+    if(s === "Pending") return "Kitchen received your order...";
+    if(s === "Preparing") return "Chef is cooking your meal... 🔥";
+    if(s === "Ready") return "Your food is ready! ✅";
+    return "Enjoy your meal!";
+}
+
 window.generateInvoice = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const order = window.currentOrderForBill;
-
-    doc.setFontSize(22);
-    doc.text(restaurantData.name, 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Invoice for Table ${order.table}`, 20, 30);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 40);
-    doc.line(20, 45, 190, 45);
-
-    let y = 55;
-    order.items.forEach(i => {
-        doc.text(`- ${i.name}`, 20, y);
-        doc.text(`₹${i.price}`, 170, y);
-        y += 10;
-    });
-
-    doc.line(20, y, 190, y);
-    doc.text(`TOTAL AMOUNT: ₹${order.total}`, 20, y + 10);
-    doc.text(`Earned Loyalty Points: ${Math.floor(order.total/100)*10}`, 20, y + 20);
-    
-    doc.save("Platto_Invoice.pdf");
+    const order = window.activeOrder;
+    doc.text(`Bill: ${restaurantData.name}`, 10, 10);
+    doc.text(`Table: ${order.table}`, 10, 20);
+    doc.text(`Total: ₹${order.total}`, 10, 30);
+    doc.save("bill.pdf");
 };
 
-window.openPaymentModal = () => {
-    document.getElementById('paymentModal').style.display = 'flex';
-    document.getElementById('final-amt').innerText = `₹${total}`;
-    const pts = parseInt(document.getElementById('user-pts').innerText);
-    if(pts >= 1000) document.getElementById('loyalty-discount-msg').style.display = 'block';
-};
 window.closeModal = () => document.getElementById('paymentModal').style.display = 'none';
 window.filterMenu = () => loadMenu();
 
-init();
+initApp();

@@ -1,35 +1,52 @@
-:root { --primary: #e11d48; --veg: #22c55e; --dark: #0f172a; --white: #ffffff; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #fafafa; padding-bottom: 120px; }
+:root { --primary: #e11d48; --dark: #0f172a; --gray: #64748b; --veg: #22c55e; --white: #ffffff; }
 
-/* Feature 1: Tracking Banner */
-.tracking-card { position: sticky; top: 0; z-index: 1001; background: var(--dark); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); }
-.track-info { display: flex; gap: 12px; align-items: center; }
-#track-status-icon { font-size: 1.5rem; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #f8fafc; color: var(--dark); -webkit-tap-highlight-color: transparent; }
 
-/* Feature 3: Loyalty Wallet */
-.wallet-card { background: linear-gradient(135deg, #fff1f2, #ffe4e6); padding: 10px 15px; border-radius: 15px; text-align: center; border: 1px solid #fecdd3; }
-#user-pts { color: var(--primary); font-weight: 800; font-size: 1.2rem; }
+.app-container { max-width: 500px; margin: 0 auto; background: var(--white); min-height: 100vh; }
 
-/* Feature 2: Veg Toggle */
-.menu-controls { padding: 20px; background: white; }
-.filter-row { display: flex; align-items: center; gap: 10px; margin-top: 15px; font-weight: 700; }
-.switch { position: relative; display: inline-block; width: 45px; height: 24px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-input:checked + .slider { background-color: var(--veg); }
-input:checked + .slider:before { transform: translateX(21px); }
+/* Fixed Logo Size */
+#res-logo { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; border: 1px solid #eee; }
 
-/* Feature 8: WhatsApp Float */
-.float-wa { position: fixed; bottom: 100px; right: 20px; z-index: 1000; background: #25d366; width: 55px; height: 55px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.main-header { padding: 25px 20px; border-bottom: 1px solid #f1f5f9; }
+.header-top { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
+.header-info h1 { margin: 0; font-size: 1.3rem; font-weight: 800; }
+.header-info p { margin: 2px 0; color: var(--gray); font-size: 0.8rem; }
+.header-stats { display: flex; gap: 8px; }
+.badge { padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; background: #f1f5f9; }
+.rating-badge { background: #fffbeb; color: #d97706; }
 
-/* Category Headers */
-.category-header { padding: 15px 20px; background: #f1f5f9; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; color: #64748b; }
+/* Loyalty Strip */
+.loyalty-strip { margin: 0 20px; background: linear-gradient(135deg, #fff1f2, #ffe4e6); border-radius: 15px; padding: 15px; display: flex; align-items: center; gap: 15px; border: 1px solid #fecdd3; }
+.points-box { text-align: center; border-right: 1px solid #fecdd3; padding-right: 15px; }
+.points-box h3 { margin: 0; color: var(--primary); font-size: 1.4rem; }
+.offer-txt { font-size: 0.75rem; font-weight: 600; color: #be123c; margin: 0; }
 
-/* Payment & Instructions */
-.chef-note textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #eee; margin: 15px 0; font-family: inherit; }
-.upi-pay-btn { background: #6366f1; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; font-weight: 700; margin-bottom: 10px; }
+/* Menu Filtering */
+.filter-bar { padding: 20px; position: sticky; top: 0; background: var(--white); z-index: 100; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 10px; }
+#menu-search { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; }
+.veg-btn { font-weight: 700; font-size: 0.85rem; color: var(--gray); cursor: pointer; }
 
-/* About Section */
-.about-res-section { padding: 40px 20px; background: white; border-top: 1px solid #eee; text-align: center; }
-.social-links a { color: var(--primary); font-weight: 700; text-decoration: none; }
+/* Food Card */
+.menu-items-list { padding: 0 20px; }
+.food-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+.food-info h4 { margin: 0 0 5px 0; font-size: 1rem; }
+.food-price { font-weight: 800; font-size: 1.1rem; }
+.add-btn { background: var(--white); border: 1px solid #e2e8f0; color: var(--primary); padding: 6px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+/* Floating Cart */
+.floating-cart { position: fixed; bottom: 20px; left: 20px; right: 20px; background: var(--dark); color: white; padding: 15px 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 1000; }
+.checkout-btn { background: var(--primary); border: none; color: white; padding: 10px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
+
+/* Modals & Overlays */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: flex-end; }
+.modal-content { background: white; width: 100%; max-width: 500px; padding: 30px 20px; border-radius: 30px 30px 0 0; text-align: center; }
+.qr-preview { margin: 20px auto; width: 150px; height: 150px; }
+
+/* Tracking Banner */
+.tracking-banner { position: fixed; top: 10px; left: 10px; right: 10px; background: var(--dark); color: white; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; z-index: 2001; border-left: 4px solid var(--primary); }
+.track-text p { margin: 0; font-weight: 700; font-size: 0.9rem; }
+
+/* Utils */
+.loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+.spinner { width: 35px; height: 35px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Platto | Digital Menu & Tracking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Platto | Digital Menu</title>
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="user-style.css">
-    <!-- QR & PDF Libraries -->
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -14,97 +15,99 @@
 
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
-    <!-- 1. LIVE ORDER TRACKING BANNER (Feature 1) -->
-    <div id="tracking-banner" class="tracking-card" style="display:none;">
-        <div class="track-info">
-            <span id="track-status-icon">👨‍🍳</span>
-            <div>
-                <h4 id="track-status-text">Preparing your meal...</h4>
-                <small id="track-time-msg">Estimated Wait: 15 Mins</small>
+    <!-- Live Tracking (Sirf active order par dikhega) -->
+    <div id="tracking-banner" class="tracking-banner" style="display:none;">
+        <div class="track-content">
+            <span id="track-status-icon">🍳</span>
+            <div class="track-text">
+                <p id="track-status-text">Preparing your order...</p>
+                <small id="track-time-msg">Ready in 10-15 mins</small>
             </div>
         </div>
-        <button id="download-bill-btn" style="display:none;" onclick="generateInvoice()">Download Bill 📄</button>
+        <button id="download-bill-btn" onclick="generateInvoice()">Bill 📄</button>
     </div>
 
-    <!-- Header & Loyalty (Feature 3 & 5) -->
-    <header class="app-header">
-        <div class="res-branding">
-            <img id="res-logo" src="https://via.placeholder.com/80" alt="Logo">
-            <div class="res-text">
-                <h1 id="res-name-display">Loading...</h1>
-                <p id="wait-time-badge">⏳ Average Wait: -- Mins</p>
-                <div class="header-tags">
-                    <span id="table-badge">Table --</span>
-                    <span class="rating-badge">★ 4.8</span>
+    <div class="app-container">
+        <!-- Header Section -->
+        <header class="main-header">
+            <div class="header-top">
+                <img id="res-logo" src="https://via.placeholder.com/60" alt="Restaurant Logo">
+                <div class="header-info">
+                    <h1 id="res-name-display">Loading...</h1>
+                    <p id="res-address-display">...</p>
                 </div>
             </div>
-        </div>
-        <div class="wallet-card">
-            <small>Loyalty Points</small>
-            <div id="user-pts">0</div>
-        </div>
-    </header>
+            <div class="header-stats">
+                <span class="badge table-badge">Table <b id="tbl-no">--</b></span>
+                <span class="badge wait-badge">⏳ <b id="wait-time">20</b> min</span>
+                <span class="badge rating-badge">★ 4.8</span>
+            </div>
+        </header>
 
-    <!-- Support & Floating WhatsApp (Feature 8) -->
-    <a id="whatsapp-btn" href="#" target="_blank" class="float-wa">
-        <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" width="35">
-    </a>
+        <!-- Loyalty Wallet -->
+        <section class="loyalty-strip">
+            <div class="points-box">
+                <small>LOYALTY POINTS</small>
+                <h3 id="user-pts">0</h3>
+            </div>
+            <p class="offer-txt">Earn 10 points for every ₹100 spent! 🎁</p>
+        </section>
 
-    <!-- Filters & Veg Toggle (Feature 2) -->
-    <section class="menu-controls">
-        <div class="search-box">
-            <input type="text" placeholder="Search for dishes..." id="menu-search">
-        </div>
-        <div class="filter-row">
-            <label class="switch">
+        <!-- Menu Filters -->
+        <div class="filter-bar">
+            <div class="search-box">
+                <input type="text" placeholder="Search dish..." id="menu-search" onkeyup="filterMenu()">
+            </div>
+            <label class="veg-toggle-label">
                 <input type="checkbox" id="veg-toggle" onchange="filterMenu()">
-                <span class="slider round"></span>
+                <span class="veg-btn">Veg Only 🟢</span>
             </label>
-            <span>Veg Only</span>
         </div>
-    </section>
 
-    <!-- Menu List -->
-    <main id="menu-container" class="food-list">
-        <!-- Categories and Items will be injected here -->
-    </main>
+        <!-- Menu Grid -->
+        <main id="menu-list" class="menu-items-list">
+            <!-- Dynamic Food Cards -->
+        </main>
 
-    <!-- About Restaurant (Feature 9) -->
-    <section class="about-res-section">
-        <h3>About Us</h3>
-        <p id="res-about-text">Loading information...</p>
-        <div class="social-links">
-            <a href="#">Instagram</a> | <a href="#">Facebook</a>
-        </div>
-    </section>
+        <!-- About Section -->
+        <section class="about-res">
+            <h4>About Restaurant</h4>
+            <p id="res-about-text">...</p>
+            <div class="social-btns">
+                <a id="whatsapp-btn" href="#" target="_blank" class="wa-btn">WhatsApp Support</a>
+            </div>
+        </section>
+    </div>
 
-    <!-- Cart Bar -->
-    <footer id="cart-bar" class="cart-bar" style="display:none;">
-        <div class="cart-details">
+    <!-- Bottom Cart Bar -->
+    <footer id="cart-bar" class="floating-cart" style="display:none;">
+        <div class="cart-info">
             <span id="cart-qty">0 Items</span>
-            <span class="price-text">Total: <b id="cart-total">₹0</b></span>
+            <b>₹<span id="cart-total">0</span></b>
         </div>
-        <button onclick="openPaymentModal()" class="checkout-btn">Proceed →</button>
+        <button class="checkout-btn" onclick="openPaymentModal()">View Cart →</button>
     </footer>
 
-    <!-- Payment Modal (Feature 4) -->
-    <div id="paymentModal" class="modal">
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>Final Checkout</h3>
-            <div id="loyalty-discount-msg" class="discount-alert" style="display:none;">
-                🎁 1000 Points Reached! ₹10 Discount Applied.
+            <h3>Final Order</h3>
+            <div id="loyalty-discount-msg" class="discount-banner" style="display:none;">
+                🎉 1000 Points! ₹10 Discount applied.
             </div>
-            <div id="payment-qr" class="qr-container"></div>
-            <p>Payable: <b id="final-amt">₹0</b></p>
             
-            <div class="chef-note">
-                <textarea id="chef-instruction" placeholder="Instructions for Chef (e.g. Less Spicy)"></textarea>
+            <div class="instruction-box">
+                <label>Instructions for Chef:</label>
+                <textarea id="chef-instruction" placeholder="e.g. No onion, spicy..."></textarea>
             </div>
 
-            <div class="payment-btns">
-                <button onclick="payViaUPI()" class="upi-pay-btn">Pay with GPay/PhonePe</button>
-                <button onclick="confirmOrder()" class="confirm-btn">I've Paid Online</button>
-                <button onclick="closeModal()" class="close-btn">Cancel</button>
+            <div id="payment-qr" class="qr-preview"></div>
+            <p class="upi-text">Payable: <b>₹<span id="final-amt">0</span></b></p>
+            
+            <div class="modal-actions">
+                <button onclick="payViaUPI()" class="btn-upi">Pay with UPI Apps</button>
+                <button onclick="confirmOrder()" class="btn-confirm">I've Paid Online</button>
+                <button onclick="closeModal()" class="btn-close">Close</button>
             </div>
         </div>
     </div>
