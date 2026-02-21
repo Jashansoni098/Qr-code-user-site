@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="user-style.css">
-    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -38,39 +37,31 @@
             </div>
         </header>
 
-        <!-- Loyalty Wallet -->
-        <section class="loyalty-box">
-            <div class="pts-container">
-                <div class="pts-circle">
-                    <small>PTS</small>
-                    <h2 id="user-pts">0</h2>
-                </div>
-                <div class="pts-info">
-                    <p>1000 Pts = ₹10 OFF 🎁</p>
-                    <button id="redeem-btn" onclick="window.redeemPoints()" disabled>Redeem Now</button>
+        <!-- Loyalty Strip -->
+        <section class="loyalty-section">
+            <div class="loyalty-card">
+                <div class="pts-circle"><small>PTS</small><h2 id="user-pts">0</h2></div>
+                <div class="loyalty-details">
+                    <p>1000 Pts = ₹10 Discount 🎁</p>
+                    <button id="redeem-btn" onclick="window.redeemPoints()" disabled>Redeem Points</button>
                 </div>
             </div>
         </section>
 
-        <!-- Menu Navigation -->
+        <!-- Search & Filter -->
         <div class="menu-sticky-nav">
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" id="menu-search" placeholder="Search dish..." onkeyup="window.filterMenu()">
-            </div>
+            <input type="text" id="menu-search" placeholder="Search dish..." onkeyup="window.filterMenu()">
             <div class="nav-filters">
-                <label class="veg-toggle-ui">
+                <label class="veg-label">
                     <input type="checkbox" id="veg-toggle" onchange="window.filterMenu()">
-                    <span class="veg-switch"></span> Veg Only 🟢
+                    <span class="veg-indicator">Veg Only 🟢</span>
                 </label>
                 <button class="offers-pill" onclick="window.openOffersModal()"><i class="fas fa-percent"></i> Offers</button>
             </div>
         </div>
 
-        <!-- Menu List -->
         <main id="menu-list" class="food-container"></main>
 
-        <!-- Footer Info -->
         <section class="footer-section">
             <p id="res-about-text">...</p>
             <div class="support-btns">
@@ -80,7 +71,7 @@
         </section>
     </div>
 
-    <!-- BOTTOM TAB NAVIGATION -->
+    <!-- BOTTOM NAV -->
     <nav class="app-bottom-nav">
         <button onclick="window.scrollTo(0,0)" class="active"><i class="fas fa-utensils"></i><span>Menu</span></button>
         <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span>Cart</span></button>
@@ -88,82 +79,68 @@
         <button onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Account</span></button>
     </nav>
 
-    <!-- FLOATING CART BAR -->
+    <!-- FLOATING CART -->
     <div id="cart-bar" class="cart-floating-bar" style="display:none;" onclick="window.openCartModal()">
-        <div class="cart-details">
-            <span id="cart-qty">0</span> Items | ₹<span id="cart-total">0</span>
-        </div>
+        <div class="cart-details"><span id="cart-qty">0</span> Items | ₹<span id="cart-total">0</span></div>
         <button>View Cart →</button>
     </div>
 
     <!-- MODALS -->
-    <!-- 1. Cart View Modal -->
+    <!-- Cart Modal -->
     <div id="cartModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>My Basket</h3>
-                <span class="close-modal" onclick="window.closeModal('cartModal')">&times;</span>
-            </div>
+            <div class="modal-header"><h3>Your Cart</h3><span class="close-modal" onclick="window.closeModal('cartModal')">&times;</span></div>
             <div id="cart-items-list" class="cart-list"></div>
-            <div class="cart-summary">
-                <div class="summary-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
-                <div id="loyalty-applied-line" class="summary-line" style="display:none; color:green;">
-                    <span>Loyalty Discount</span><b>-₹10</b>
-                </div>
-            </div>
-            <button class="primary-btn" onclick="window.openPaymentModal()">Proceed to Checkout</button>
+            <div class="summary-line"><span>Total Amount</span><b id="summary-subtotal">₹0</b></div>
+            <button class="primary-btn" onclick="window.openPaymentModal()">Checkout</button>
         </div>
     </div>
 
-    <!-- 2. Payment Modal -->
+    <!-- Checkout Modal -->
     <div id="paymentModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <h3>Checkout</h3>
+            <h3>Final Checkout</h3>
             <input type="text" id="cust-name" placeholder="Enter Your Name" class="pro-input">
             <div class="pay-modes">
                 <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-mode-btn">💳 Online</button>
                 <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-mode-btn">💵 Cash</button>
             </div>
-            <div id="qr-area" style="display:none;">
-                <div id="payment-qr" class="qr-container"></div>
-                <button onclick="window.copyUPI()" class="copy-btn">Copy UPI ID</button>
-            </div>
-            <textarea id="chef-note" class="pro-input" placeholder="Instruction for chef..."></textarea>
-            <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order</button>
-            <button class="btn-text" onclick="window.closeModal('paymentModal')">Back to Cart</button>
+            <div id="qr-area" style="display:none;"><div id="payment-qr" class="qr-container"></div></div>
+            <textarea id="chef-note" class="pro-input" placeholder="Chef instruction..."></textarea>
+            <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
         </div>
     </div>
 
-    <!-- 3. Auth Modal (Login/Signup Fixed) -->
+    <!-- Auth Modal -->
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <h2 id="auth-title">Welcome to Platto</h2>
             <div class="auth-tabs">
                 <button id="tab-login" class="active" onclick="window.toggleAuth('login')">Login</button>
                 <button id="tab-signup" onclick="window.toggleAuth('signup')">Sign Up</button>
             </div>
             <input type="email" id="auth-email" placeholder="Email" class="pro-input">
             <input type="password" id="auth-pass" placeholder="Password" class="pro-input">
-            <button class="primary-btn" id="auth-action-btn" onclick="window.handleAuth()">Login</button>
+            <button class="primary-btn" id="auth-action-btn" onclick="window.handleAuth()">Submit</button>
             <button class="btn-text" onclick="window.closeModal('authModal')">Close</button>
         </div>
     </div>
 
-    <!-- Tracking & Success Screens same as before... -->
+    <!-- Tracking Modal -->
     <div id="trackingModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <h3>Live Order Status</h3>
+            <h3>Track Order</h3>
             <div id="live-tracking-list"></div>
             <button class="primary-btn" onclick="window.closeModal('trackingModal')">Close</button>
         </div>
     </div>
 
+    <!-- Success Screen -->
     <div id="success-screen" class="success-screen-overlay" style="display:none;">
         <div class="success-card">
             <div class="check-circle">✓</div>
             <h1>Order Placed!</h1>
             <p>Thank you <b id="s-name"></b>. Table: <b id="s-table"></b></p>
-            <button class="primary-btn" onclick="location.reload()">Great!</button>
+            <button class="primary-btn" onclick="location.reload()">Back to Menu</button>
         </div>
     </div>
 
