@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Platto | Digital Menu</title>
-    <!-- CSS & Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Platto | Premium Digital Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="user-style.css">
     <!-- Libraries -->
@@ -17,16 +16,16 @@
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
     <div class="app-wrapper">
-        <!-- Header Section -->
+        <!-- Header -->
         <header class="main-header">
-            <div class="header-flex">
+            <div class="header-top">
                 <img id="res-logo" src="https://via.placeholder.com/60" alt="Logo" class="res-logo-img">
                 <div class="res-meta">
                     <h1 id="res-name-display">Loading...</h1>
-                    <div class="social-links">
-                        <a id="link-fb" href="#"><i class="fab fa-facebook"></i></a>
-                        <a id="link-ig" href="#"><i class="fab fa-instagram"></i></a>
-                        <a id="link-yt" href="#"><i class="fab fa-youtube"></i></a>
+                    <div class="social-row">
+                        <a id="link-fb" href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a id="link-ig" href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a id="link-yt" href="#" target="_blank"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
             </div>
@@ -34,12 +33,12 @@
                 <span class="badge">Table <b id="tbl-no">--</b></span>
                 <span class="badge">⏳ <b id="wait-time">20</b> min</span>
                 <div id="wifi-display" class="wifi-badge" style="display:none;">
-                    <i class="fas fa-wifi"></i> <span id="wifi-name">--</span> | <small id="wifi-pass">--</small>
+                    <i class="fas fa-wifi"></i> <span id="wifi-name"></span> | <small id="wifi-pass"></small>
                 </div>
             </div>
         </header>
 
-        <!-- Loyalty Card -->
+        <!-- Loyalty Wallet -->
         <section class="loyalty-box">
             <div class="pts-container">
                 <div class="pts-circle">
@@ -47,17 +46,17 @@
                     <h2 id="user-pts">0</h2>
                 </div>
                 <div class="pts-info">
-                    <p>Earn 10 points for every ₹100 spent! 🎁</p>
-                    <button id="redeem-btn" onclick="window.redeemPoints()" disabled>Redeem 1000 Pts (-₹10)</button>
+                    <p>1000 Pts = ₹10 OFF 🎁</p>
+                    <button id="redeem-btn" onclick="window.redeemPoints()" disabled>Redeem Now</button>
                 </div>
             </div>
         </section>
 
-        <!-- Search & Filter -->
+        <!-- Menu Navigation -->
         <div class="menu-sticky-nav">
             <div class="search-bar">
                 <i class="fas fa-search"></i>
-                <input type="text" id="menu-search" placeholder="Search delicious food..." onkeyup="window.filterMenu()">
+                <input type="text" id="menu-search" placeholder="Search dish..." onkeyup="window.filterMenu()">
             </div>
             <div class="nav-filters">
                 <label class="veg-toggle-ui">
@@ -71,10 +70,9 @@
         <!-- Menu List -->
         <main id="menu-list" class="food-container"></main>
 
-        <!-- Footer / Support -->
+        <!-- Footer Info -->
         <section class="footer-section">
-            <h4>About Restaurant</h4>
-            <p id="res-about-text">Loading details...</p>
+            <p id="res-about-text">...</p>
             <div class="support-btns">
                 <a id="whatsapp-btn" href="#" class="btn-wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>
                 <button onclick="window.openSupportModal()" class="btn-ticket"><i class="fas fa-headset"></i> Support</button>
@@ -85,68 +83,87 @@
     <!-- BOTTOM TAB NAVIGATION -->
     <nav class="app-bottom-nav">
         <button onclick="window.scrollTo(0,0)" class="active"><i class="fas fa-utensils"></i><span>Menu</span></button>
-        <button onclick="window.openTracking()"><i class="fas fa-clock-rotate-left"></i><span>Track</span></button>
-        <button onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Profile</span></button>
+        <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span>Cart</span></button>
+        <button onclick="window.openTracking()"><i class="fas fa-route"></i><span>Track</span></button>
+        <button onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Account</span></button>
     </nav>
 
     <!-- FLOATING CART BAR -->
-    <div id="cart-bar" class="cart-floating-bar" style="display:none;">
+    <div id="cart-bar" class="cart-floating-bar" style="display:none;" onclick="window.openCartModal()">
         <div class="cart-details">
             <span id="cart-qty">0</span> Items | ₹<span id="cart-total">0</span>
         </div>
-        <button onclick="window.openPaymentModal()">Checkout →</button>
+        <button>View Cart →</button>
     </div>
 
-    <!-- ALL MODALS (Fixed Placement) -->
-    <div id="announcement-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-content ann-popup">
-            <h2 id="ann-title">Special Offer!</h2>
-            <p id="ann-desc"></p>
-            <button class="primary-btn" onclick="window.closeAnnouncement()">Explore Menu</button>
+    <!-- MODALS -->
+    <!-- 1. Cart View Modal -->
+    <div id="cartModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>My Basket</h3>
+                <span class="close-modal" onclick="window.closeModal('cartModal')">&times;</span>
+            </div>
+            <div id="cart-items-list" class="cart-list"></div>
+            <div class="cart-summary">
+                <div class="summary-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
+                <div id="loyalty-applied-line" class="summary-line" style="display:none; color:green;">
+                    <span>Loyalty Discount</span><b>-₹10</b>
+                </div>
+            </div>
+            <button class="primary-btn" onclick="window.openPaymentModal()">Proceed to Checkout</button>
         </div>
     </div>
 
-    <div id="trackingModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content full-modal">
-            <h3>My Orders Tracking</h3>
-            <div id="live-tracking-list"></div>
-            <button class="btn-close" onclick="window.closeTracking()">Close</button>
+    <!-- 2. Payment Modal -->
+    <div id="paymentModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h3>Checkout</h3>
+            <input type="text" id="cust-name" placeholder="Enter Your Name" class="pro-input">
+            <div class="pay-modes">
+                <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-mode-btn">💳 Online</button>
+                <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-mode-btn">💵 Cash</button>
+            </div>
+            <div id="qr-area" style="display:none;">
+                <div id="payment-qr" class="qr-container"></div>
+                <button onclick="window.copyUPI()" class="copy-btn">Copy UPI ID</button>
+            </div>
+            <textarea id="chef-note" class="pro-input" placeholder="Instruction for chef..."></textarea>
+            <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order</button>
+            <button class="btn-text" onclick="window.closeModal('paymentModal')">Back to Cart</button>
         </div>
     </div>
 
+    <!-- 3. Auth Modal (Login/Signup Fixed) -->
     <div id="authModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content auth-modal">
-            <h2 id="auth-title">Account Login</h2>
-            <p>Login to save your loyalty points securely.</p>
+        <div class="modal-content">
+            <h2 id="auth-title">Welcome to Platto</h2>
+            <div class="auth-tabs">
+                <button id="tab-login" class="active" onclick="window.toggleAuth('login')">Login</button>
+                <button id="tab-signup" onclick="window.toggleAuth('signup')">Sign Up</button>
+            </div>
             <input type="email" id="auth-email" placeholder="Email" class="pro-input">
             <input type="password" id="auth-pass" placeholder="Password" class="pro-input">
-            <button class="primary-btn" onclick="window.handleAuth()">Login / Sign Up</button>
-            <button class="btn-close" onclick="window.closeAuthModal()">Close</button>
+            <button class="primary-btn" id="auth-action-btn" onclick="window.handleAuth()">Login</button>
+            <button class="btn-text" onclick="window.closeModal('authModal')">Close</button>
         </div>
     </div>
 
-    <div id="paymentModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content checkout-modal">
-            <h3>Final Checkout</h3>
-            <input type="text" id="cust-name" placeholder="Your Full Name" class="pro-input">
-            <div class="pay-options">
-                <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-btn-choice">💳 Online</button>
-                <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-btn-choice">💵 Cash</button>
-            </div>
-            <div id="qr-area" style="display:none; padding:20px;">
-                <div id="payment-qr" style="display:flex; justify-content:center;"></div>
-            </div>
-            <textarea id="chef-note" placeholder="Special Instructions (e.g. No Spicy)"></textarea>
-            <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
+    <!-- Tracking & Success Screens same as before... -->
+    <div id="trackingModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h3>Live Order Status</h3>
+            <div id="live-tracking-list"></div>
+            <button class="primary-btn" onclick="window.closeModal('trackingModal')">Close</button>
         </div>
     </div>
 
     <div id="success-screen" class="success-screen-overlay" style="display:none;">
         <div class="success-card">
-            <div class="check-icon">✓</div>
+            <div class="check-circle">✓</div>
             <h1>Order Placed!</h1>
-            <p>Thank you <b id="s-name"></b>. Your meal is being prepared.</p>
-            <button class="primary-btn" onclick="location.reload()">Back to Menu</button>
+            <p>Thank you <b id="s-name"></b>. Table: <b id="s-table"></b></p>
+            <button class="primary-btn" onclick="location.reload()">Great!</button>
         </div>
     </div>
 
