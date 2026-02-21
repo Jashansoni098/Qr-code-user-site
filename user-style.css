@@ -568,3 +568,36 @@ body {
     font-weight: 700;
     cursor: pointer;
 }
+/* Redeem Section in Cart */
+.redeem-box {
+    background: #f0fdf4;
+    border: 1px dashed #22c55e;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+.redeem-info { color: #166534; font-weight: 700; margin-bottom: 10px; }
+#apply-redeem-btn {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* Profile Badge */
+.pts-badge {
+    background: var(--primary);
+    color: white;
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+/* Bottom Nav Button Fix */
+.app-bottom-nav button { cursor: pointer; transition: 0.2s; }
+.app-bottom-nav button:active { transform: scale(0.9); }

@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="user-style.css">
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -42,8 +43,8 @@
             <div class="loyalty-card">
                 <div class="pts-circle"><small>PTS</small><h2 id="user-pts">0</h2></div>
                 <div class="loyalty-details">
-                    <p>1000 Pts = ₹10 Discount 🎁</p>
-                    <button id="redeem-btn" onclick="window.redeemPoints()" disabled>Redeem Points</button>
+                    <p>Earn 10 points for every ₹100 spent! 🎁</p>
+                    <small>1000 Pts = ₹10 Discount</small>
                 </div>
             </div>
         </section>
@@ -71,49 +72,64 @@
         </section>
     </div>
 
-    <!-- BOTTOM NAV -->
+    <!-- BOTTOM NAV (Toggled between Login and Profile based on User Auth) -->
     <nav class="app-bottom-nav">
         <button onclick="window.scrollTo(0,0)" class="active"><i class="fas fa-utensils"></i><span>Menu</span></button>
         <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span>Cart</span></button>
         <button onclick="window.openTracking()"><i class="fas fa-route"></i><span>Track</span></button>
-        <button onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Account</span></button>
+        
+        <!-- Button logic handled in JS -->
+        <button id="nav-auth-btn" onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Login</span></button>
+        <button id="nav-profile-btn" onclick="window.openProfileModal()" style="display:none;"><i class="fas fa-id-card"></i><span>Profile</span></button>
     </nav>
 
-    <!-- FLOATING CART -->
+    <!-- FLOATING CART BAR -->
     <div id="cart-bar" class="cart-floating-bar" style="display:none;" onclick="window.openCartModal()">
         <div class="cart-details"><span id="cart-qty">0</span> Items | ₹<span id="cart-total">0</span></div>
         <button>View Cart →</button>
     </div>
 
     <!-- MODALS -->
-    <!-- Cart Modal -->
+    <!-- Cart Modal with Redeem Option -->
     <div id="cartModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <div class="modal-header"><h3>Your Cart</h3><span class="close-modal" onclick="window.closeModal('cartModal')">&times;</span></div>
+            <div class="modal-header"><h3>My Cart</h3><span class="close-modal" onclick="window.closeModal('cartModal')">&times;</span></div>
             <div id="cart-items-list" class="cart-list"></div>
-            <div class="summary-line"><span>Total Amount</span><b id="summary-subtotal">₹0</b></div>
+            
+            <!-- Redeem Points UI -->
+            <div id="redeem-section" class="redeem-box" style="display:none;">
+                <div class="redeem-info">
+                    <i class="fas fa-gift"></i>
+                    <span>Redeem 1000 Points for ₹10 Discount?</span>
+                </div>
+                <button id="apply-redeem-btn" onclick="window.applyRedeem()">Apply Reward</button>
+            </div>
+
+            <div class="summary-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
+            <div id="discount-line" class="summary-line" style="display:none; color:green;"><span>Redeem Discount</span><b>-₹10</b></div>
             <button class="primary-btn" onclick="window.openPaymentModal()">Checkout</button>
         </div>
     </div>
 
-    <!-- Checkout Modal -->
-    <div id="paymentModal" class="modal-overlay" style="display:none;">
+    <!-- Profile Modal (Update Name & Phone) -->
+    <div id="profileModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <h3>Final Checkout</h3>
-            <input type="text" id="cust-name" placeholder="Enter Your Name" class="pro-input">
-            <div class="pay-modes">
-                <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-mode-btn">💳 Online</button>
-                <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-mode-btn">💵 Cash</button>
+            <div class="modal-header"><h3>My Profile</h3><span class="close-modal" onclick="window.closeModal('profileModal')">&times;</span></div>
+            <div class="profile-pts-card">
+                <small>Available Points</small>
+                <h2 id="profile-pts">0</h2>
             </div>
-            <div id="qr-area" style="display:none;"><div id="payment-qr" class="qr-container"></div></div>
-            <textarea id="chef-note" class="pro-input" placeholder="Chef instruction..."></textarea>
-            <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
+            <input type="text" id="user-name" placeholder="Your Name" class="pro-input">
+            <input type="tel" id="user-phone" placeholder="Mobile Number" class="pro-input">
+            <button class="primary-btn" onclick="window.saveUserProfile()">Save Profile</button>
+            <button class="btn-text" style="color:red; margin-top:20px;" onclick="window.logout()">Logout</button>
         </div>
     </div>
 
-    <!-- Auth Modal -->
+    <!-- Auth Modal (Login/Signup) -->
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
+            <h2 id="auth-title">Welcome to Platto</h2>
             <div class="auth-tabs">
                 <button id="tab-login" class="active" onclick="window.toggleAuth('login')">Login</button>
                 <button id="tab-signup" onclick="window.toggleAuth('signup')">Sign Up</button>
@@ -125,12 +141,18 @@
         </div>
     </div>
 
-    <!-- Tracking Modal -->
-    <div id="trackingModal" class="modal-overlay" style="display:none;">
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <h3>Track Order</h3>
-            <div id="live-tracking-list"></div>
-            <button class="primary-btn" onclick="window.closeModal('trackingModal')">Close</button>
+            <h3>Final Checkout</h3>
+            <input type="text" id="cust-name" placeholder="Confirm Name" class="pro-input">
+            <div class="pay-modes">
+                <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-mode-btn">💳 Online</button>
+                <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-mode-btn">💵 Cash</button>
+            </div>
+            <div id="qr-area" style="display:none;"><div id="payment-qr" class="qr-container"></div></div>
+            <textarea id="chef-note" class="pro-input" placeholder="Note for chef..."></textarea>
+            <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
         </div>
     </div>
 
@@ -140,7 +162,7 @@
             <div class="check-circle">✓</div>
             <h1>Order Placed!</h1>
             <p>Thank you <b id="s-name"></b>. Table: <b id="s-table"></b></p>
-            <button class="primary-btn" onclick="location.reload()">Back to Menu</button>
+            <button class="primary-btn" onclick="window.closeSuccess()">Back to Menu</button>
         </div>
     </div>
 
