@@ -4,7 +4,7 @@
 :root {
     --primary: #e11d48;
     --dark: #0f172a;
-    --gray: #94a3b8;
+    --gray: #64748b;
     --light-gray: #f1f5f9;
     --white: #ffffff;
     --veg: #22c55e;
@@ -27,6 +27,7 @@ body {
     overflow-x: hidden;
 }
 
+/* App Wrapper for Mobile feel */
 .app-wrapper {
     max-width: 500px;
     margin: 0 auto;
@@ -38,7 +39,7 @@ body {
 }
 
 /* ==========================================
-   2. HEADER & BRANDING
+   2. HEADER, SOCIALS & WIFI
    ========================================== */
 .main-header {
     padding: 20px;
@@ -77,32 +78,11 @@ body {
     font-size: 1.1rem;
 }
 
-.lang-toggle {
-    display: flex;
-    gap: 5px;
-}
-
-.lang-btn {
-    padding: 4px 10px;
-    font-size: 0.7rem;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    background: white;
-    font-weight: 700;
-}
-
-.lang-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
 .info-badges {
     display: flex;
     gap: 8px;
     margin-top: 15px;
     flex-wrap: wrap;
-    align-items: center;
 }
 
 .badge {
@@ -120,13 +100,16 @@ body {
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* ==========================================
-   3. CATEGORY SCROLL & SEARCH
+   3. CATEGORY SCROLL (SWIGGY STYLE)
    ========================================== */
 .category-nav {
-    padding: 10px 20px;
+    padding: 10px 0 15px 20px;
     background: white;
     position: sticky;
     top: 0;
@@ -139,7 +122,6 @@ body {
     gap: 10px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding: 5px 0;
 }
 
 .category-scroll::-webkit-scrollbar { display: none; }
@@ -152,7 +134,7 @@ body {
     white-space: nowrap;
     font-weight: 700;
     color: #64748b;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     cursor: pointer;
 }
 
@@ -162,39 +144,6 @@ body {
     border-color: var(--primary);
 }
 
-.menu-search-container {
-    padding: 0 20px 15px;
-}
-
-.search-inner {
-    background: var(--light-gray);
-    padding: 12px 15px;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.search-inner input {
-    border: none;
-    background: transparent;
-    width: 100%;
-    outline: none;
-    font-family: inherit;
-}
-
-/* Hero Section */
-.hero-section {
-    padding: 0 20px 20px;
-}
-
-.hero-img {
-    width: 100%;
-    border-radius: 20px;
-    height: 150px;
-    object-fit: cover;
-}
-
 /* ==========================================
    4. FOOD GRID (2-COLUMNS)
    ========================================== */
@@ -202,16 +151,16 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
-    padding: 0 20px 20px;
+    padding: 20px;
 }
 
 .food-card {
     background: white;
-    border-radius: 15px;
+    border-radius: 18px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     border: 1px solid #f1f5f9;
-    transition: 0.3s;
+    cursor: pointer;
 }
 
 .food-img {
@@ -220,17 +169,14 @@ body {
     object-fit: cover;
 }
 
-.food-info {
-    padding: 10px;
-}
-
+.food-info { padding: 12px; }
 .food-info h4 {
     margin: 0;
     font-size: 0.85rem;
     font-weight: 800;
     height: 40px;
     overflow: hidden;
-    color: #1e293b;
+    color: var(--dark);
 }
 
 .food-price {
@@ -241,43 +187,19 @@ body {
 }
 
 /* ==========================================
-   5. MODALS (CUSTOMIZATION, CART, OFFERS)
+   5. CUSTOMIZATION (SIZE & EXTRAS)
    ========================================== */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.75);
-    z-index: 3000;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end; /* Bottom sheet style */
+.customize-sheet {
+    border-radius: 30px 30px 0 0 !important;
 }
 
-.modal-content {
-    background: white;
-    width: 100%;
-    max-width: 500px;
-    padding: 25px;
-    border-radius: 25px 25px 0 0;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-
-.customize-sheet .section-title {
+.section-title {
     font-weight: 800;
-    margin-bottom: 10px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--gray);
     text-transform: uppercase;
+    margin-bottom: 12px;
+    display: block;
 }
 
 .option-row {
@@ -291,48 +213,25 @@ body {
     cursor: pointer;
 }
 
-.option-row input {
-    margin-right: 10px;
-    accent-color: var(--primary);
-}
-
-/* Offers Modal */
-.offers-popup .offers-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.smile-icon {
-    font-size: 3rem;
-}
-
-.offer-item-box {
-    background: #fff1f2;
-    border: 1px dashed var(--primary);
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    text-align: left;
-}
+.option-row input { accent-color: var(--primary); }
 
 /* ==========================================
-   6. CHECKOUT & DELIVERY LOGIC
+   6. CHECKOUT & DELIVERY TOGGLE
    ========================================== */
 .type-selection {
     display: flex;
     gap: 10px;
-    margin: 15px 0;
+    margin-bottom: 15px;
 }
 
 .type-btn {
     flex: 1;
-    padding: 15px;
-    border-radius: 15px;
+    padding: 12px;
+    border-radius: 12px;
     border: 2px solid #eee;
     background: white;
     font-weight: 800;
     cursor: pointer;
-    font-family: inherit;
 }
 
 .type-btn.active {
@@ -341,48 +240,88 @@ body {
     color: var(--primary);
 }
 
-.delivery-notice {
-    background: #fffbeb;
-    color: #92400e;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-
-.coupon-section {
-    margin: 20px 0;
-}
-
-.coupon-box {
+.coupon-area {
     display: flex;
-    background: var(--light-gray);
+    background: #f1f5f9;
     padding: 5px;
     border-radius: 12px;
+    margin: 15px 0;
 }
 
-.coupon-box input {
+.coupon-area input {
     flex: 1;
     background: transparent;
     border: none;
     padding: 10px;
     font-weight: 700;
-    outline: none;
 }
 
-.coupon-box button {
+.coupon-area button {
     background: var(--dark);
     color: white;
     border: none;
-    padding: 0 20px;
-    border-radius: 10px;
-    font-weight: 800;
+    padding: 0 15px;
+    border-radius: 8px;
+    font-weight: 700;
 }
 
 /* ==========================================
-   7. APP UTILS
+   7. LOYALTY & REDEEM
    ========================================== */
+.loyalty-card {
+    background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+    border-radius: 20px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #fecdd3;
+    margin: 20px;
+}
+
+.pts-circle {
+    background: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid var(--primary);
+}
+
+.redeem-box {
+    background: #f0fdf4;
+    border: 1px dashed #22c55e;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+/* ==========================================
+   8. MODALS & BOTTOM NAV
+   ========================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 3000;
+    display: flex; justify-content: center;
+    align-items: flex-end;
+}
+
+.modal-content {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    padding: 25px;
+    border-radius: 25px 25px 0 0;
+    text-align: center;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
 .app-bottom-nav {
     position: fixed;
     bottom: 0;
@@ -393,7 +332,7 @@ body {
     background: white;
     display: flex;
     justify-content: space-around;
-    padding: 10px 0;
+    padding: 12px 0;
     box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
     z-index: 2000;
 }
@@ -414,28 +353,28 @@ body {
     color: var(--primary);
 }
 
-.primary-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 15px;
-    width: 100%;
-    font-weight: 800;
-    font-size: 1rem;
-    cursor: pointer;
+/* ==========================================
+   9. SUCCESS & ANNOUNCEMENT
+   ========================================== */
+.ann-popup {
+    border-radius: 25px !important;
+    margin: 20px;
+    align-self: center !important;
 }
 
 .success-screen-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: white; z-index: 5000;
-    display: flex; justify-content: center; align-items: center;
+    background: white;
+    z-index: 5000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 .success-check {
-    width: 80px;
-    height: 80px;
+    width: 80px; height: 80px;
     background: #dcfce7;
     color: #22c55e;
     border-radius: 50%;
@@ -443,32 +382,21 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 2.5rem;
-    margin: 0 auto 20px;
+    margin-bottom: 20px;
 }
 
-.history-scroll {
-    max-height: 400px;
-    overflow-y: auto;
-    text-align: left;
-}
-
-.history-item {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.cart-floating-bar {
+/* Loader */
+.loader-overlay {
     position: fixed;
-    bottom: 75px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    background: var(--dark);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1500;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: white; z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
 }
+.spinner {
+    width: 35px; height: 35px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
