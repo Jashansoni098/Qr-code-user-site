@@ -213,6 +213,9 @@ window.addCustomizedToCart = () => {
 // ==========================================
 // 4. BASKET & QUANTITY Logic
 // ==========================================
+// ==========================================
+// 4. BASKET & QUANTITY Logic
+// ==========================================
 function saveCart() {
     localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
     updateCartUI();
@@ -222,63 +225,46 @@ function updateCartUI() {
     const totalQty = cart.reduce((s, i) => s + i.qty, 0);
     const totalAmt = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     const bar = document.getElementById('cart-bar');
+
     if (cart.length > 0 && bar) {
         showFlex('cart-bar');
         setUI('cart-qty', totalQty + " Items");
         setUI('cart-total', totalAmt);
-        if (document.getElementById('cart-badge-count')) document.getElementById('cart-badge-count').innerText = totalQty;
-    } else if (bar) showEl('cart-bar', false);
+        if (document.getElementById('cart-badge-count'))
+            document.getElementById('cart-badge-count').innerText = totalQty;
+    } else if (bar) {
+        showEl('cart-bar', false);
+    }
 }
 
 window.openCartModal = () => {
     showFlex('cartModal');
-    window.renderCartList();
-};
-    const list = document.getElementById('cart-items-list');
-    list.innerHTML = cart.length === 0 ? "<p style='padding:20px;'>Basket is empty</p>" : "";
-    let sub = 0;
-    cart.forEach((item, index) => {
-        sub += item.price * item.qty;
-        list.innerHTML += `
-        <div class="cart-item">
-            <div style="text-align:left;"><b>${item.name}</b><br><small>₹${item.price}</small></div>
-            <div class="qty-btn-box">
-                <button onclick="window.changeQty(${index}, -1)">-</button>
-                <span>${item.qty}</span>
-                <button onclick="window.changeQty(${index}, 1)">+</button>
-            </div>
-            <b>₹${item.price * item.qty}</b>
-        </div>`;
-    });
-    setUI('summary-subtotal', "₹" + sub);
-    setUI('available-pts', userPoints);
-    showEl('redeem-section', (userPoints >= 1000 && cart.length > 0));
-    setUI('summary-total', "₹" + (isRedeeming ? sub - 10 : sub));
-    showFlex('discount-line', isRedeeming);
+    renderCartList();
 };
 
 window.changeQty = (index, delta) => {
 
     cart[index].qty = (cart[index].qty || 1) + delta;
 
-    if (cart[index].qty <= 0)
+    if (cart[index].qty <= 0) {
         cart.splice(index, 1);
+    }
 
-    // Coupon reset if cart changes
+    // Reset coupon if cart changes
     if (appliedCouponCode) {
         couponDiscount = 0;
         appliedCouponCode = "";
     }
 
-    localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
-
-    updateCartUI();
-    window.renderCartList();
+    saveCart();
+    renderCartList();
 };
+
 // ==========================================
 // PROFESSIONAL BASKET RENDER
 // ==========================================
-window.renderCartList = () => {
+function renderCartList() {
+
     const list = document.getElementById('cart-items-list');
     if (!list) return;
 
@@ -289,6 +275,7 @@ window.renderCartList = () => {
     let subtotal = 0;
 
     cart.forEach((item, index) => {
+
         const itemTotal = item.price * (item.qty || 1);
         subtotal += itemTotal;
 
@@ -300,14 +287,41 @@ window.renderCartList = () => {
             </div>
 
             <div class="qty-wrapper">
-                <button class="qty-btn-basket" onclick="window.changeQty(${index}, -1)">-</button>
-                <span class="qty-number">${item.qty || 1}</span>
-                <button class="qty-btn-basket" onclick="window.changeQty(${index}, 1)">+</button>
+                <button onclick="window.changeQty(${index}, -1)">-</button>
+                <span>${item.qty}</span>
+                <button onclick="window.changeQty(${index}, 1)">+</button>
             </div>
 
             <div class="item-total-price">₹${itemTotal}</div>
         </div>`;
     });
+
+    // Subtotal
+    setUI('summary-subtotal', "₹" + subtotal);
+
+    // Loyalty
+    showEl('redeem-section', (userPoints >= 1000 && cart.length > 0));
+
+    // Coupon
+    const discountLine = document.getElementById('coupon-discount-line');
+    const discountVal = document.getElementById('coupon-discount-val');
+
+    if (couponDiscount > 0) {
+        if (discountLine) discountLine.style.display = "flex";
+        if (discountVal) discountVal.innerText = "-₹" + couponDiscount;
+    } else {
+        if (discountLine) discountLine.style.display = "none";
+    }
+
+    let totalPayable = subtotal;
+
+    if (isRedeeming) totalPayable -= 10;
+    totalPayable -= couponDiscount;
+
+    if (totalPayable < 0) totalPayable = 0;
+
+    setUI('summary-total', "₹" + totalPayable);
+}
 
     // Subtotal
     setUI('summary-subtotal', "₹" + subtotal);
