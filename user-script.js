@@ -1,234 +1,384 @@
-import { db, auth } from './firebase-config.js';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, getDoc, collection, onSnapshot, addDoc, query, where, setDoc, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const urlParams = new URLSearchParams(window.location.search);
-const resId = urlParams.get('resId');
-const tableNo = urlParams.get('table') || "01";
-
-let cart = JSON.parse(localStorage.getItem(`pl_cart_${resId}`)) || [];
-let restaurantData = {};
-let selectedPaymentMode = "";
-let orderType = "Pickup";
-let isRedeeming = false;
-let userUID = "";
-let userPoints = 0;
-let currentItem = null;
-let currentAuthMode = "login";
-
-const loader = document.getElementById('loader');
-
-// --- APP CORE ---
-async function init() {
-    if (!resId) return;
-    const resSnap = await getDoc(doc(db, "restaurants", resId));
-    if (resSnap.exists()) {
-        restaurantData = resSnap.data();
-        renderInfo();
-        renderCategories();
-        handleAnnouncement();
-    }
-    onAuthStateChanged(auth, async (user) => {
-        userUID = user ? user.uid : (localStorage.getItem('p_guest_id') || "g_" + Date.now());
-        if(!user) localStorage.setItem('p_guest_id', userUID);
-        
-        document.getElementById('nav-auth-btn').style.display = user ? "none" : "flex";
-        document.getElementById('nav-profile-btn').style.display = user ? "flex" : "none";
-        
-        const uSnap = await getDoc(doc(db, "users", userUID));
-        if(uSnap.exists()) {
-            userPoints = uSnap.data().points || 0;
-            updatePointsUI();
-            document.getElementById('user-profile-name').value = uSnap.data().name || "";
-        }
-        loadMenu();
-        checkLiveOrders();
-    });
+/* ==========================================
+   1. CORE VARIABLES & RESET
+   ========================================== */
+:root {
+    --primary: #e11d48; /* Premium Crimson Red */
+    --primary-light: #fff1f2;
+    --dark: #0f172a;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --white: #ffffff;
+    --bg: #f8fafc;
+    --veg: #22c55e;
+    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --radius: 20px;
 }
 
-// --- FIX: Reference & Logic Mappings ---
-window.updateCartUI = () => {
-    const totalAmt = cart.reduce((s, i) => s + i.price, 0);
-    const bar = document.getElementById('cart-bar');
-    if(cart.length > 0 && bar) {
-        bar.style.display = "flex";
-        document.getElementById('cart-qty').innerText = cart.length;
-        document.getElementById('cart-total').innerText = totalAmt;
-    } else if(bar) bar.style.display = "none";
-};
-
-window.addToCart = (name, price) => {
-    cart.push({ id: Date.now(), name, price });
-    localStorage.setItem(`pl_cart_${resId}`, JSON.stringify(cart));
-    window.updateCartUI();
-    alert(name + " added!");
-};
-
-window.updatePointsUI = () => {
-    const ptsEl = document.getElementById('user-pts');
-    const redeemBtn = document.getElementById('redeem-btn');
-    if(ptsEl) ptsEl.innerText = userPoints;
-    if(redeemBtn) redeemBtn.disabled = userPoints < 1000;
-};
-
-// --- Modals Logic ---
-window.openCartModal = () => {
-    document.getElementById('cartModal').style.display = "flex";
-    const list = document.getElementById('cart-items-list');
-    list.innerHTML = "";
-    let sub = 0;
-    cart.forEach((item, index) => {
-        sub += item.price;
-        list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${item.name}</span><b>₹${item.price}</b></div>`;
-    });
-    document.getElementById('summary-subtotal').innerText = "₹" + sub;
-    document.getElementById('summary-total').innerText = "₹" + (isRedeeming ? sub - 10 : sub);
-};
-
-window.openCheckoutModal = () => {
-    if(cart.length === 0) return alert("Cart empty");
-    window.closeModal('cartModal');
-    document.getElementById('checkoutModal').style.display = "flex";
-    const sub = cart.reduce((s, i) => s + i.price, 0);
-    document.getElementById('final-amt').innerText = isRedeeming ? sub - 10 : sub;
-};
-
-window.setPayMode = (mode) => {
-    selectedPaymentMode = mode;
-    document.getElementById('mode-online').classList.toggle('selected', mode === 'Online');
-    document.getElementById('mode-cash').classList.toggle('selected', mode === 'Cash');
-    if(mode === 'Online') {
-        document.getElementById('payment-qr-area').style.display = "block";
-        const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
-        new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${document.getElementById('final-amt').innerText}`, width: 140, height: 140 });
-    } else document.getElementById('payment-qr-area').style.display = "none";
-    document.getElementById('final-confirm-btn').disabled = false;
-};
-
-window.confirmOrder = async () => {
-    const name = document.getElementById('cust-name-final').value;
-    if(!name) return alert("Enter Name");
-    loader.style.display = "flex";
-    const finalBill = document.getElementById('final-amt').innerText;
-    const orderData = {
-        resId, table: tableNo, customerName: name, userUID, items: cart,
-        total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
-        orderType, timestamp: new Date(), note: document.getElementById('chef-note').value
-    };
-    await addDoc(collection(db, "orders"), orderData);
-    
-    let newPts = userPoints + Math.floor(parseInt(finalBill)/10);
-    if(isRedeeming) newPts -= 1000;
-    await setDoc(doc(db, "users", userUID), { points: newPts }, { merge: true });
-
-    localStorage.removeItem(`pl_cart_${resId}`);
-    document.getElementById('checkoutModal').style.display = "none";
-    document.getElementById('success-screen').style.display = "flex";
-    document.getElementById('s-name').innerText = name;
-    loader.style.display = "none";
-};
-
-// --- PIZZA CUSTOMIZE ---
-window.openCustomize = (id, item) => {
-    currentItem = { ...item, id };
-    document.getElementById('cust-item-name').innerText = item.name;
-    document.getElementById('p-price-s').innerText = "₹" + item.price;
-    document.getElementById('p-price-m').innerText = "₹" + (parseInt(item.price) + 50);
-    document.getElementById('p-price-l').innerText = "₹" + (parseInt(item.price) + 100);
-    const exDiv = document.getElementById('extras-options');
-    exDiv.innerHTML = "";
-    if(restaurantData.variants) {
-        restaurantData.variants.forEach(v => {
-            exDiv.innerHTML += `<label class="option-row"><span><input type="checkbox" class="ex-chk" value="${v.name}" data-price="${v.price}"> ${v.name}</span><b>+₹${v.price}</b></label>`;
-        });
-    }
-    document.getElementById('customizeModal').style.display = "flex";
-};
-
-window.addCustomizedToCart = () => {
-    const size = document.querySelector('input[name="p-size"]:checked').value;
-    let price = parseInt(currentItem.price);
-    if(size === 'Medium') price += 50; if(size === 'Large') price += 100;
-    document.querySelectorAll('.ex-chk:checked').forEach(el => price += parseInt(el.dataset.price));
-    window.addToCart(`${currentItem.name} (${size})`, price);
-    window.closeModal('customizeModal');
-};
-
-// --- HELPERS ---
-function renderInfo() {
-    document.getElementById('res-name-display').innerText = restaurantData.name;
-    document.getElementById('wait-time').innerText = restaurantData.prepTime || "20";
-    document.getElementById('res-about-text').innerText = restaurantData.about || "";
-    document.getElementById('tbl-no').innerText = tableNo;
-    if(restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
-    if(restaurantData.wifiName) {
-        document.getElementById('wifi-display').style.display = "flex";
-        document.getElementById('wifi-name').innerText = restaurantData.wifiName;
-        document.getElementById('wifi-pass').innerText = restaurantData.wifiPass;
-    }
-    document.getElementById('link-ig').href = restaurantData.igLink || "#";
-    document.getElementById('link-fb').href = restaurantData.fbLink || "#";
-    document.getElementById('link-yt').href = restaurantData.ytLink || "#";
-    document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
-function loadMenu(category = 'All') {
-    onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
-        const grid = document.getElementById('menu-list');
-        grid.innerHTML = "";
-        const isVeg = document.getElementById('veg-toggle').checked;
-        const search = document.getElementById('menu-search').value.toLowerCase();
-        snap.forEach(d => {
-            const item = d.data();
-            if(category !== 'All' && item.category !== category) return;
-            if(isVeg && !item.name.toLowerCase().includes('veg')) return;
-            if(search && !item.name.toLowerCase().includes(search)) return;
-            grid.innerHTML += `<div class="food-card" onclick='window.openCustomize("${d.id}", ${JSON.stringify(item)})'>
-                <img src="${item.imgUrl || 'https://via.placeholder.com/150'}" class="food-img">
-                <div class="food-info"><h4>${item.name}</h4><b class="food-price">₹${item.price}</b></div>
-            </div>`;
-        });
-        if(loader) loader.style.display = "none";
-    });
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+    line-height: 1.5;
+    overflow-x: hidden;
 }
 
-function checkLiveOrders() {
-    const q = query(collection(db, "orders"), where("userUID", "==", userUID));
-    onSnapshot(q, (snap) => {
-        const list = document.getElementById('order-history-list');
-        if(!list) return;
-        list.innerHTML = "";
-        snap.forEach(d => {
-            const o = d.data();
-            if(o.status !== "Picked Up") {
-                list.innerHTML += `<div style="padding:15px; border-bottom:1px solid #eee; text-align:left;">
-                    <b style="color:var(--primary)">${o.status}</b><br>Table ${o.table} | ₹${o.total}
-                </div>`;
-            }
-        });
-    });
+/* Centralized App Wrapper (Mobile View feel on Desktop) */
+.app-wrapper {
+    max-width: 500px;
+    margin: 0 auto;
+    background: var(--white);
+    min-height: 100vh;
+    padding-bottom: 110px; /* Space for Bottom Nav & Floating Cart */
+    position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,0.05);
 }
 
-// Standard UI Mappings
-window.renderCategories = () => { /* Injected via Init */ };
-window.filterByCategory = (cat, btn) => {
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); loadMenu(cat);
-};
-window.closeModal = (id) => document.getElementById(id).style.display = "none";
-window.openAuthModal = () => document.getElementById('authModal').style.display = "flex";
-window.openProfileModal = () => document.getElementById('profileModal').style.display = "flex";
-window.openTracking = () => document.getElementById('trackingModal').style.display = "flex";
-window.setAuthMode = (m) => authMode = m;
-window.logout = () => signOut(auth).then(() => location.reload());
-window.handleAuth = async () => {
-    const e = document.getElementById('auth-email').value;
-    const p = document.getElementById('auth-pass').value;
-    try {
-        if(authMode==='login') await signInWithEmailAndPassword(auth, e, p);
-        else await createUserWithEmailAndPassword(auth, e, p);
-        location.reload();
-    } catch(err) { alert(err.message); }
-};
+/* ==========================================
+   2. HEADER, SOCIALS & WIFI
+   ========================================== */
+.main-header {
+    padding: 20px;
+    background: var(--white);
+    border-bottom: 1px solid #f1f5f9;
+}
 
-init();
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.res-logo-img {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 1.5px solid #f1f5f9;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.res-meta h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.social-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.social-row a {
+    color: var(--text-muted);
+    font-size: 1rem;
+    transition: 0.3s;
+}
+
+.social-row a:hover { color: var(--primary); }
+
+.lang-toggle { display: flex; gap: 4px; }
+.lang-btn {
+    padding: 4px 10px;
+    font-size: 0.65rem;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+.lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Badges Bar (Table, Time, WiFi) */
+.info-badges {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wifi-badge {
+    background: #eff6ff;
+    color: #3b82f6;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ==========================================
+   3. SEARCH & CATEGORY NAVIGATION
+   ========================================== */
+.menu-search-container { padding: 15px 20px 5px; }
+
+.search-inner {
+    background: #f1f5f9;
+    padding: 12px 18px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-inner input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+/* Swiggy Style Category Scroll */
+.category-nav {
+    padding: 10px 0 15px 20px;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.category-scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-right: 20px;
+}
+
+.category-scroll::-webkit-scrollbar { display: none; }
+
+.cat-pill {
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    white-space: nowrap;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.cat-pill.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2);
+}
+
+.hero-section { padding: 0 20px 20px; }
+.hero-img { width: 100%; border-radius: 20px; height: 150px; object-fit: cover; }
+
+/* ==========================================
+   4. LOYALTY SECTION
+   ========================================== */
+.loyalty-container { padding: 0 20px; margin-bottom: 20px; }
+.loyalty-card {
+    background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+    border-radius: 24px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #fecdd3;
+}
+
+.pts-circle {
+    background: white; width: 55px; height: 55px;
+    border-radius: 50%; display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    border: 2px solid var(--primary); flex-shrink: 0;
+}
+.pts-circle h2 { margin: 0; color: var(--primary); font-size: 1.1rem; }
+.pts-circle small { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; }
+
+.pts-details p { font-size: 0.8rem; font-weight: 700; color: #be123c; margin: 0; }
+.pts-details small { font-size: 0.7rem; color: #e11d48; font-weight: 600; }
+
+#redeem-btn {
+    background: var(--primary); color: white; border: none;
+    padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;
+}
+#redeem-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+/* ==========================================
+   5. FOOD GRID (2-COLUMNS)
+   ========================================== */
+.food-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    padding: 0 20px 20px;
+}
+
+.food-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.food-card:active { transform: scale(0.96); }
+
+.food-img { width: 100%; height: 115px; object-fit: cover; }
+.food-info { padding: 12px; }
+.food-info h4 {
+    margin: 0; font-size: 0.85rem; font-weight: 800;
+    height: 38px; overflow: hidden; color: var(--dark);
+    line-height: 1.2;
+}
+.food-price { color: var(--primary); font-weight: 800; font-size: 1rem; margin-top: 8px; display: block; }
+
+/* ==========================================
+   6. MODALS & BOTTOM SHEETS
+   ========================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 3000;
+    display: flex; justify-content: center;
+    align-items: flex-end; /* Mobile Drawer Effect */
+}
+
+.modal-content {
+    background: var(--white);
+    width: 100%; max-width: 500px;
+    padding: 25px;
+    border-radius: 30px 30px 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+/* Modals Utilities */
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.close-x, .close-icon-fixed { font-size: 1.8rem; color: var(--gray); cursor: pointer; }
+
+/* Customization Options (Size S/M/L & Extras) */
+.section-title { font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: block; }
+.options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.option-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px; background: #f8fafc; border-radius: 16px;
+    font-weight: 700; cursor: pointer;
+}
+.option-row input { accent-color: var(--primary); width: 20px; height: 20px; }
+
+/* ==========================================
+   7. CHECKOUT, DELIVERY & COUPONS
+   ========================================== */
+.type-selection { display: flex; gap: 10px; margin-bottom: 20px; }
+.type-btn {
+    flex: 1; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;
+    background: white; font-weight: 800; cursor: pointer; font-family: inherit;
+}
+.type-btn.active { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
+
+.pay-modes { display: flex; gap: 12px; margin: 15px 0; }
+.pay-choice {
+    flex: 1; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;
+    background: white; font-weight: 800; cursor: pointer;
+}
+.pay-choice.selected { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
+
+.coupon-box { display: flex; background: #f1f5f9; padding: 6px; border-radius: 16px; margin: 15px 0; }
+.coupon-box input { flex: 1; border: none; background: transparent; padding: 10px; font-weight: 700; outline: none; }
+.coupon-box button { background: var(--dark); color: white; border: none; padding: 0 15px; border-radius: 10px; font-weight: 700; }
+
+.redeem-box { background: #f0fdf4; border: 1.5px dashed #22c55e; padding: 15px; border-radius: 16px; margin-bottom: 15px; text-align: center; }
+
+/* ==========================================
+   8. BOTTOM NAVIGATION & FLOATING CART
+   ========================================== */
+.app-bottom-nav {
+    position: fixed; bottom: 0; left: 50%;
+    transform: translateX(-50%); width: 100%;
+    max-width: 500px; background: var(--white);
+    display: flex; justify-content: space-around;
+    padding: 12px 0 30px; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); z-index: 2000;
+}
+.app-bottom-nav button {
+    background: none; border: none; color: #94a3b8;
+    display: flex; flex-direction: column; align-items: center;
+    font-size: 0.7rem; font-weight: 800; gap: 5px; cursor: pointer;
+}
+.app-bottom-nav button.active { color: var(--primary); }
+.app-bottom-nav i { font-size: 1.3rem; }
+
+.cart-floating-bar {
+    position: fixed; bottom: 85px; left: 50%;
+    transform: translateX(-50%); width: 92%;
+    max-width: 460px; background: var(--dark);
+    color: white; padding: 18px 25px; border-radius: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 1500; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+}
+.btn-view-cart { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 800; cursor: pointer; }
+
+/* ==========================================
+   9. ANNOUNCEMENT & SUCCESS SCREENS
+   ========================================== */
+.ann-popup { border-radius: 25px !important; margin: 20px; align-self: center !important; }
+
+.success-screen-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: white; z-index: 5000; display: flex;
+    justify-content: center; align-items: center; text-align: center;
+}
+.success-check { width: 90px; height: 90px; background: #dcfce7; color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto 20px; }
+
+/* ==========================================
+   10. UTILS (LOADER, BUTTONS, INPUTS)
+   ========================================== */
+.primary-btn {
+    background: var(--primary); color: white; border: none;
+    padding: 16px; border-radius: 18px; width: 100%;
+    font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.3s;
+}
+.primary-btn:disabled { background: #cbd5e1; }
+
+.pro-input { width: 100%; padding: 16px; border: 1.5px solid #e2e8f0; border-radius: 18px; margin-bottom: 12px; font-family: inherit; font-size: 1rem; }
+
+.loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+.spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Support UI */
+.footer-info { padding: 40px 20px; background: white; border-top: 1px solid #f1f5f9; text-align: center; }
+.btn-wa { color: #22c55e; text-decoration: none; font-weight: 700; border: 1.5px solid #22c55e; padding: 10px 20px; border-radius: 14px; display: inline-block; margin-right: 10px; }
+.btn-ticket { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; }
