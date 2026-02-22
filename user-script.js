@@ -1,87 +1,133 @@
 import { db, auth } from './firebase-config.js';
-import { 
-    signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { 
-    doc, getDoc, collection, onSnapshot, addDoc, query, where, setDoc, updateDoc, getDocs, orderBy 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, getDoc, collection, onSnapshot, addDoc, query, where, setDoc, updateDoc, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ==========================================
-// 1. GLOBAL VARIABLES & STATE
-// ==========================================
 const urlParams = new URLSearchParams(window.location.search);
 const resId = urlParams.get('resId');
 const tableNo = urlParams.get('table') || "01";
 
-let cart = JSON.parse(localStorage.getItem(`platto_cart_${resId}`)) || [];
+let cart = JSON.parse(localStorage.getItem(`pl_cart_${resId}`)) || [];
 let restaurantData = {};
 let selectedPaymentMode = "";
-let orderType = "Pickup"; 
 let isRedeeming = false;
-let currentAuthMode = "login";
 let userUID = "";
 let userPoints = 0;
-let currentItemToCustomize = null;
 let couponDiscount = 0;
 let appliedCouponCode = "";
 
-const loader = document.getElementById('loader');
-
-// Safety Helpers
 const setUI = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-const showEl = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "block" : "none"; };
-const showFlex = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "flex" : "none"; };
 
 // ==========================================
-// 2. BASKET & QUANTITY LOGIC
+// 1. BASKET & QUANTITY Logic (Fixed +/-)
+// ==========================================
+window.changeQty = (index, delta) => {
+    cart[index].qty = (cart[index].qty || 1) + delta;
+    if(cart[index].qty <= 0) cart.splice(index, 1);
+    
+    // Reset coupon if items change
+    if(appliedCouponCode) {
+        couponDiscount = 0;
+        appliedCouponCode = "";
+        if(document.getElementById('coupon-msg')) document.getElementById('coupon-msg').innerText = "";
+    }
+    
+    localStorage.setItem(`pl_cart_${resId}`, JSON.stringify(cart));
+    updateCartUI(); 
+    window.renderCartList();
+};
+
+window.renderCartList = () => {
+    const list = document.getElementById('cart-items-list');
+    if(!list) return;
+    list.innerHTML = cart.length === 0 ? "<p style='padding:20px;'>Basket is empty</p>" : "";
+    let sub = 0;
+    
+    cart.forEach((item, index) => {
+        const itemTotal = item.price * (item.qty || 1);
+        sub += itemTotal;
+        list.innerHTML += `
+        <div class="cart-item">
+            <div class="item-main-info"><b>${item.name}</b><br><small>₹${item.price}</small></div>
+            <div class="qty-control-box">
+                <button class="qty-btn-pro" onclick="window.changeQty(${index}, -1)">-</button>
+                <span class="qty-count-text">${item.qty || 1}</span>
+                <button class="qty-btn-pro" onclick="window.changeQty(${index}, 1)">+</button>
+            </div>
+            <div style="font-weight:800; min-width:60px; text-align:right;">₹${itemTotal}</div>
+        </div>`;
+    });
+
+    setUI('summary-subtotal', "₹" + sub);
+    setUI('available-pts', userPoints);
+    
+    let total = sub - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('summary-total', "₹" + (total < 0 ? 0 : total));
+    
+    if(document.getElementById('coupon-discount-line')) {
+        document.getElementById('coupon-discount-line').style.display = couponDiscount > 0 ? "flex" : "none";
+        document.getElementById('coupon-discount-val').innerText = "-₹" + couponDiscount;
+    }
+};
+
+// ==========================================
+// 2. APPLY COUPON LOGIC
+// ==========================================
+window.applyCoupon = async () => {
+    const code = document.getElementById('coupon-code').value.trim().toUpperCase();
+    if(!code) return alert("Please enter code");
+    
+    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    
+    try {
+        const q = query(collection(db, "restaurants", resId, "coupons"), where("code", "==", code));
+        const snap = await getDocs(q);
+        
+        if(!snap.empty) {
+            const c = snap.docs[0].data();
+            if(subtotal < c.minOrder) return alert(`Minimum order ₹${c.minOrder} required!`);
+            
+            couponDiscount = Math.min(Math.floor((subtotal * c.percent) / 100), c.maxDiscount);
+            appliedCouponCode = code;
+            
+            document.getElementById('coupon-msg').innerText = `🎉 Success! ₹${couponDiscount} OFF`;
+            window.renderCartList();
+        } else {
+            alert("Invalid Coupon Code");
+        }
+    } catch(e) { alert("Error applying coupon"); }
+};
+
+// ==========================================
+// 3. OTHER HELPER UPDATES
 // ==========================================
 function updateCartUI() {
     const totalQty = cart.reduce((s, i) => s + (i.qty || 1), 0);
-    const totalAmt = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
-    const cartBar = document.getElementById('cart-bar');
-    
-    if(cart.length > 0 && cartBar) {
-        showFlex('cart-bar');
-        setUI('cart-qty', totalQty + " Items");
-        setUI('cart-total', totalAmt);
-        const badge = document.getElementById('cart-badge-count');
-        if(badge) badge.innerText = totalQty;
-    } else if(cartBar) {
-        showEl('cart-bar', false);
-    }
+    const totalAmt = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    setUI('cart-badge-count', totalQty);
+    setUI('cart-total', totalAmt);
 }
 
 window.addToCart = (name, price) => {
     const index = cart.findIndex(i => i.name === name);
-    if(index > -1) {
-        cart[index].qty++;
-    } else {
-        cart.push({ id: Date.now(), name, price: parseInt(price), qty: 1 });
-    }
+    if(index > -1) cart[index].qty++;
+    else cart.push({ id: Date.now(), name, price: parseInt(price), qty: 1 });
     saveCart();
-    alert(name + " added!");
-};
-
-window.changeQty = (index, delta) => {
-    cart[index].qty = (cart[index].qty || 1) + delta;
-    if (cart[index].qty <= 0) cart.splice(index, 1);
-    
-    // Reset coupon if cart changes
-    if (appliedCouponCode) {
-        couponDiscount = 0;
-        appliedCouponCode = "";
-        setUI('coupon-msg', "");
-        showEl('coupon-discount-line', false);
-    }
-    
-    saveCart();
-    window.renderCartList();
 };
 
 function saveCart() {
-    localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
+    localStorage.setItem(`pl_cart_${resId}`, JSON.stringify(cart));
     updateCartUI();
 }
+
+window.openCheckoutModal = () => {
+    if(cart.length === 0) return alert("Basket empty!");
+    window.closeModal('cartModal');
+    document.getElementById('checkoutModal').style.display = "flex";
+    const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const final = sub - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('final-amt', final < 0 ? 0 : final);
+};
+
 
 // ==========================================
 // 3. INITIALIZATION & AUTH

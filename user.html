@@ -157,35 +157,41 @@
     </div>
 
     <!-- 2. CART MODAL -->
-    <div id="cartModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content full-sheet">
-            <div class="modal-header"><h3>My Basket</h3><span class="close-x" onclick="window.closeModal('cartModal')">&times;</span></div>
-            
-            <div id="cart-items-list" class="cart-scroll"></div>
-            
-            <div id="redeem-section" class="redeem-box" style="display:none;">
-                <p>🎁 You have <b id="available-pts">0</b> points. Redeem 1000 for ₹10 off?</p>
-                <button onclick="window.applyRedeem()" id="apply-redeem-btn">Apply Reward</button>
-            </div>
-
-            <div class="coupon-section">
-                <div class="coupon-box">
-                    <input type="text" id="coupon-code" placeholder="Enter Coupon Code">
-                    <button onclick="window.applyCoupon()">APPLY</button>
-                </div>
-                <p id="coupon-msg" class="coupon-msg"></p>
-            </div>
-
-            <div class="summary-card">
-                <div class="sum-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
-                <div id="discount-line" class="sum-line" style="display:none; color:green;"><span>Loyalty Reward</span><b>-₹10</b></div>
-                <div id="coupon-discount-line" class="sum-line" style="display:none; color:green;"><span>Coupon Discount</span><b id="coupon-discount-val">-₹0</b></div>
-                <hr>
-                <div class="sum-line total"><span>Total Payable</span><b id="summary-total">₹0</b></div>
-            </div>
-            <button class="primary-btn" onclick="window.openCheckoutModal()">Proceed to Checkout</button>
+   <!-- 2. CART MODAL (Fixed Structure) -->
+<div id="cartModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content full-sheet">
+        <div class="modal-header">
+            <h3>My Basket</h3>
+            <span class="close-x" onclick="window.closeModal('cartModal')">&times;</span>
         </div>
+        
+        <!-- Quantity +/- buttons yahan professional dikhenge -->
+        <div id="cart-items-list" class="cart-scroll"></div>
+        
+        <!-- NEW: APPLY COUPON SECTION -->
+        <div class="coupon-area">
+            <div class="coupon-box">
+                <input type="text" id="coupon-code" placeholder="Enter Coupon Code">
+                <button onclick="window.applyCoupon()">APPLY</button>
+            </div>
+            <p id="coupon-msg" style="text-align:left; font-size:0.7rem; margin-top:5px;"></p>
+        </div>
+
+        <div class="summary-card">
+            <div class="sum-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
+            <div id="discount-line" class="sum-line" style="display:none; color:green;">
+                <span>Loyalty Discount</span><b>-₹10</b>
+            </div>
+            <!-- Coupon Discount Display -->
+            <div id="coupon-discount-line" class="sum-line" style="display:none; color:green;">
+                <span>Coupon Discount</span><b id="coupon-discount-val">-₹0</b>
+            </div>
+            <hr>
+            <div class="sum-line total"><span>Grand Total</span><b id="summary-total">₹0</b></div>
+        </div>
+        <button class="primary-btn" onclick="window.openCheckoutModal()">Proceed to Order</button>
     </div>
+</div>
 
     <!-- 3. CHECKOUT MODAL (Pickup vs Delivery Switch) -->
     <div id="checkoutModal" class="modal-overlay" style="display:none;">

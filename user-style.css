@@ -136,48 +136,69 @@ body {
 /* ==========================================
    5. PROFESSIONAL BASKET (FIXED ALIGNMENT)
    ========================================== */
-.cart-list { margin: 15px 0; max-height: 300px; overflow-y: auto; }
+/* Quantity Controller Alignment Fix */
 .cart-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
+    padding: 15px;
     background: #f8fafc;
     border-radius: 16px;
     margin-bottom: 10px;
     border: 1px solid #f1f5f9;
 }
 
-.item-info-box { flex: 1.5; text-align: left; }
-.item-info-box b { font-size: 0.85rem; display: block; }
-.item-info-box small { color: var(--gray); font-size: 0.7rem; }
+.item-main-info { flex: 2; text-align: left; }
 
-/* Quantity Buttons */
-.qty-wrapper {
+.qty-control-box {
+    flex: 1;
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 10px;
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    padding: 4px;
-    margin: 0 10px;
+    padding: 5px;
 }
 
-.qty-btn-basket {
-    width: 26px; height: 26px;
-    border: none; background: var(--primary);
-    color: white; border-radius: 6px; font-weight: 800; cursor: pointer;
+.qty-btn-pro {
+    border: none;
+    background: none;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 25px;
 }
 
-.qty-number { font-weight: 800; font-size: 0.85rem; min-width: 20px; text-align: center; }
-.item-total-price { font-weight: 800; font-size: 0.9rem; min-width: 55px; text-align: right; }
+.qty-count-text { font-weight: 800; font-size: 0.9rem; min-width: 20px; text-align: center; }
 
-/* Coupon Section */
-.basket-coupon-section { background: #f1f5f9; padding: 10px; border-radius: 12px; margin-bottom: 15px; }
-.basket-coupon-box { display: flex; gap: 5px; }
-.basket-coupon-box input { flex: 1; border: 1px solid #ddd; border-radius: 8px; padding: 8px; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; }
-.basket-coupon-box button { background: var(--dark); color: white; border: none; padding: 0 12px; border-radius: 8px; font-weight: 700; font-size: 0.7rem; }
-
+/* Coupon Box UI */
+.coupon-area { margin: 15px 0; }
+.coupon-box {
+    display: flex;
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 12px;
+}
+.coupon-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.coupon-box button {
+    background: var(--dark);
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.75rem;
+}
 /* ==========================================
    6. BOTTOM NAV & FLOATING CART
    ========================================== */
