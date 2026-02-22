@@ -4,32 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Platto | Premium Digital Ordering</title>
-    <!-- Modern Fonts & Icons -->
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="user-style.css">
     
-    <!-- Essential Libraries -->
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-    <!-- Loader Screen -->
+    <!-- Professional Loader -->
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
-    <!-- 1. ANNOUNCEMENT POPUP (Feature: Pop-up on landing) -->
+    <!-- 1. ANNOUNCEMENT POPUP (Feature: Pop-up on load) -->
     <div id="announcement-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content ann-popup">
-            <div class="close-icon" onclick="window.closeModal('announcement-modal')">&times;</div>
+            <div class="close-icon-fixed" onclick="window.closeModal('announcement-modal')">&times;</div>
             <div id="ann-img-container"></div>
             <h2 id="ann-title">Special Announcement</h2>
-            <p id="ann-desc">Loading special deals...</p>
+            <p id="ann-desc">Loading special deals for you...</p>
             <button class="primary-btn" onclick="window.closeModal('announcement-modal')">View Today's Menu</button>
         </div>
     </div>
 
+    <!-- MAIN APP WRAPPER -->
     <div class="app-wrapper">
+        
         <!-- HEADER SECTION -->
         <header class="main-header">
             <div class="header-top">
@@ -61,24 +63,24 @@
         <div class="menu-search-container">
             <div class="search-inner">
                 <i class="fas fa-search"></i>
-                <input type="text" id="menu-search" placeholder="Search for food, drinks..." onkeyup="window.filterMenu()">
+                <input type="text" id="menu-search" placeholder="Search for food, pizza, drinks..." onkeyup="window.filterMenu()">
             </div>
         </div>
 
-        <!-- HERO BANNER -->
+        <!-- HERO BANNER (Promotion Area) -->
         <section class="hero-section">
-            <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" alt="Special Deal" class="hero-img">
+            <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" alt="Banner" class="hero-img">
         </section>
 
-        <!-- DYNAMIC CATEGORY BAR (Screenshot Style) -->
+        <!-- DYNAMIC CATEGORY BAR (Horizontal Scroll) -->
         <div class="category-nav">
             <div class="category-scroll" id="categories-list">
-                <button class="cat-pill active" onclick="window.filterByCategory('All')">All</button>
-                <!-- Categories from owner side will be injected here -->
+                <button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>
+                <!-- Categories from owner side injected here -->
             </div>
         </div>
 
-        <!-- LOYALTY CARD -->
+        <!-- LOYALTY CARD SECTION -->
         <section class="loyalty-container">
             <div class="loyalty-card">
                 <div class="pts-circle">
@@ -87,15 +89,15 @@
                 </div>
                 <div class="pts-details">
                     <p>Earn 10 points for every ₹100 spent! 🎁</p>
-                    <small>1000 Pts = ₹10 Discount</small>
+                    <button id="redeem-btn" onclick="window.redeemPoints()" disabled>Redeem 1000 Pts (-₹10)</button>
                 </div>
             </div>
         </section>
 
-        <!-- MAIN MENU LIST (Grid / List View) -->
+        <!-- MAIN MENU LIST (2-Column Grid like Swiggy) -->
         <main id="menu-list" class="food-grid"></main>
 
-        <!-- ABOUT & PROFESSIONAL SUPPORT -->
+        <!-- FOOTER / SUPPORT SECTION -->
         <section class="footer-info">
             <div class="about-card">
                 <h4>About Restaurant</h4>
@@ -112,35 +114,36 @@
         </section>
     </div>
 
-    <!-- BOTTOM TAB NAVIGATION (App Style) -->
+    <!-- BOTTOM TAB NAVIGATION -->
     <nav class="app-bottom-nav">
-        <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="active"><i class="fas fa-utensils"></i><span>Menu</span></button>
-        <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span id="cart-badge-count">0</span><span>Cart</span></button>
-        <button onclick="window.openTracking()"><i class="fas fa-route"></i><span>Track</span></button>
-        <button id="nav-auth-btn" onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Login</span></button>
+        <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="active"><i class="fas fa-home"></i><span>Home</span></button>
+        <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span id="cart-badge-count">0</span><span>Basket</span></button>
+        <button onclick="window.openTracking()"><i class="fas fa-route"></i><span>Tracking</span></button>
+        <!-- Dynamic Login/Profile Button -->
+        <button id="nav-auth-btn" onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Account</span></button>
         <button id="nav-profile-btn" onclick="window.openProfileModal()" style="display:none;"><i class="fas fa-id-card"></i><span>Profile</span></button>
     </nav>
 
     <!-- FLOATING CART BAR -->
     <div id="cart-bar" class="cart-floating-bar" style="display:none;" onclick="window.openCartModal()">
         <div class="cart-details">
-            <span id="cart-qty">0</span> Items | ₹<span id="cart-total">0</span>
+            <span id="cart-qty">0 Items</span> | <b>₹<span id="cart-total">0</span></b>
         </div>
-        <button class="btn-view-cart">View Cart →</button>
+        <button class="btn-view-cart">View Basket →</button>
     </div>
 
     <!-- MODALS SECTION -->
 
-    <!-- 1. CUSTOMIZE MODAL (Pizza Size & Extra Variants) -->
+    <!-- 1. CUSTOMIZE MODAL (Size S/M/L & Extra Variants) -->
     <div id="customizeModal" class="modal-overlay" style="display:none;">
         <div class="modal-content customize-sheet">
             <div class="modal-header">
-                <h3 id="cust-item-name">Customize Item</h3>
+                <h3 id="cust-item-name">Customize Your Choice</h3>
                 <span class="close-x" onclick="window.closeModal('customizeModal')">&times;</span>
             </div>
             <div class="customize-body">
                 <div class="section-group">
-                    <p class="section-title">Select Size</p>
+                    <p class="section-title">Choose Size</p>
                     <div class="options-list" id="size-options">
                         <label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span id="p-price-s">₹0</span></label>
                         <label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span id="p-price-m">₹0</span></label>
@@ -148,9 +151,9 @@
                     </div>
                 </div>
                 <div class="section-group">
-                    <p class="section-title">Extra Variants (Cheese, Toppings etc.)</p>
+                    <p class="section-title">Add Extra Variants (Cheese/Toppings)</p>
                     <div class="options-list" id="extras-options">
-                        <!-- Dynamic from owner side -->
+                        <!-- Dynamic variants from owner side -->
                     </div>
                 </div>
             </div>
@@ -158,21 +161,21 @@
         </div>
     </div>
 
-    <!-- 2. OFFERS MODAL (Today's Active Offers) -->
+    <!-- 2. OFFERS MODAL -->
     <div id="offersModal" class="modal-overlay" style="display:none;">
         <div class="modal-content offers-popup">
             <div class="offers-header">
                 <div class="smile-icon">😊</div>
-                <h3>Today's Active Offers</h3>
+                <h3>Active Offers Today</h3>
             </div>
             <div id="offers-list" class="offers-container">
-                <!-- Multiple offers from owner side -->
+                <!-- Offers injected here -->
             </div>
             <button class="btn-close" onclick="window.closeModal('offersModal')">Close</button>
         </div>
     </div>
 
-    <!-- 3. CART MODAL (Basket, Coupons, Order Type) -->
+    <!-- 3. CART MODAL (Basket, Coupons, Redemption) -->
     <div id="cartModal" class="modal-overlay" style="display:none;">
         <div class="modal-content full-sheet">
             <div class="modal-header">
@@ -181,6 +184,14 @@
             </div>
             <div id="cart-items-list" class="cart-scroll"></div>
             
+            <div id="redeem-section" class="redeem-box" style="display:none;">
+                <div class="redeem-info">
+                    <i class="fas fa-gift"></i>
+                    <span>Redeem 1000 Points for ₹10 Discount?</span>
+                </div>
+                <button onclick="window.applyRedeem()">Apply Reward</button>
+            </div>
+
             <div class="coupon-section">
                 <div class="coupon-box">
                     <input type="text" id="coupon-code" placeholder="Enter Coupon Code">
@@ -191,38 +202,32 @@
 
             <div class="summary-card">
                 <div class="summary-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
-                <div class="summary-line" id="loyalty-redeem-line" style="display:none;">
-                    <span>Loyalty Redeem</span><b style="color:green;">-₹10</b>
-                </div>
-                <div class="summary-line" id="coupon-discount-line" style="display:none;">
-                    <span>Coupon Discount</span><b id="coupon-discount-val" style="color:green;">-₹0</b>
+                <div class="summary-line" id="discount-line" style="display:none; color:green;">
+                    <span>Discount</span><b>-₹10</b>
                 </div>
                 <hr>
-                <div class="summary-line total-line"><span>Total Payable</span><b id="summary-total">₹0</b></div>
+                <div class="summary-line total-line"><span>Grand Total</span><b id="summary-total">₹0</b></div>
             </div>
 
-            <button class="primary-btn" onclick="window.openCheckoutModal()">Proceed to Checkout</button>
+            <button class="primary-btn" onclick="window.openCheckoutModal()">Proceed to Order</button>
         </div>
     </div>
 
-    <!-- 4. CHECKOUT MODAL (Pickup vs Delivery Selection) -->
+    <!-- 4. CHECKOUT MODAL (Pickup vs Delivery Switch) -->
     <div id="checkoutModal" class="modal-overlay" style="display:none;">
         <div class="modal-content checkout-sheet">
-            <h3>Final Step</h3>
-            <p>How would you like to receive your order?</p>
+            <h3>Order Type</h3>
             <div class="type-selection">
                 <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active"><i class="fas fa-box"></i> Pickup</button>
                 <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn"><i class="fas fa-truck"></i> Delivery</button>
             </div>
             
-            <div id="delivery-address-box" style="display:none;">
-                <div class="delivery-notice">
-                    ⚠️ Delivery only within 3KM. Min Order ₹300.
-                </div>
+            <div id="delivery-address-box" style="display:none; margin-top:15px;">
+                <div class="delivery-notice">⚠️ Delivery only within 3KM (Min ₹300).</div>
                 <input type="text" id="cust-address" placeholder="Full Address / Landmark" class="pro-input">
             </div>
 
-            <input type="text" id="cust-name-final" placeholder="Your Name" class="pro-input" style="margin-top:15px;">
+            <input type="text" id="cust-name-final" placeholder="Enter Your Name" class="pro-input" style="margin-top:15px;">
             
             <div class="pay-modes">
                 <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-choice">💳 Online</button>
@@ -234,58 +239,55 @@
                 <p class="upi-text" id="final-upi-id"></p>
             </div>
 
-            <button id="final-place-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order</button>
+            <textarea id="chef-note" class="pro-input" placeholder="Note: e.g. Extra spicy, No onions..."></textarea>
+            <button id="final-place-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Final Order</button>
         </div>
     </div>
 
-    <!-- 5. TRACKING & HISTORY MODAL -->
+    <!-- 5. TRACKING & HISTORY -->
     <div id="trackingModal" class="modal-overlay" style="display:none;">
         <div class="modal-content full-sheet">
-            <div class="modal-header"><h3>Order History & Tracking</h3><span onclick="window.closeModal('trackingModal')">&times;</span></div>
-            <div id="order-history-list" class="history-scroll">
-                <!-- Orders and status tracking will show here -->
-            </div>
+            <div class="modal-header"><h3>Tracking & History</h3><span onclick="window.closeModal('trackingModal')">&times;</span></div>
+            <div id="order-history-list" class="history-scroll"></div>
         </div>
     </div>
 
-    <!-- 6. USER PROFILE MODAL -->
+    <!-- 6. PROFILE MODAL -->
     <div id="profileModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <h3>My Profile</h3>
             <input type="text" id="user-profile-name" placeholder="Full Name" class="pro-input">
             <input type="tel" id="user-profile-phone" placeholder="Mobile Number" class="pro-input">
             <button class="primary-btn" onclick="window.saveUserProfile()">Save Profile</button>
-            <button class="btn-logout" onclick="window.logout()">Logout</button>
+            <button class="btn-logout" onclick="window.logout()" style="color:red; margin-top:20px;">Logout</button>
             <button class="btn-text" onclick="window.closeModal('profileModal')">Close</button>
         </div>
     </div>
 
-    <!-- 7. AUTH MODAL (Login/Signup) -->
+    <!-- 7. AUTH MODAL -->
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-content auth-box">
-            <h2 id="auth-title">Login</h2>
             <div class="auth-tabs">
                 <button id="tab-login" class="active" onclick="window.setAuthMode('login')">Login</button>
                 <button id="tab-signup" onclick="window.setAuthMode('signup')">Sign Up</button>
             </div>
             <input type="email" id="auth-email" placeholder="Email Address" class="pro-input">
             <input type="password" id="auth-pass" placeholder="Password" class="pro-input">
-            <button class="primary-btn" onclick="window.handleAuth()">Submit</button>
+            <button class="primary-btn" onclick="window.handleAuth()">Proceed</button>
             <button class="btn-text" onclick="window.closeModal('authModal')">Close</button>
         </div>
     </div>
 
-    <!-- SUCCESS SCREEN -->
+    <!-- 8. SUCCESS SCREEN -->
     <div id="success-screen" class="success-screen-overlay" style="display:none;">
         <div class="success-card">
             <div class="success-check"><i class="fas fa-check"></i></div>
             <h1>Order Placed!</h1>
             <p>Thank you <b id="s-name"></b>. Enjoy your meal at Table <b id="s-table"></b>.</p>
-            <button class="primary-btn" onclick="location.reload()">Back to Home</button>
+            <button class="primary-btn" onclick="location.reload()">Back to Menu</button>
         </div>
     </div>
 
-    <!-- Script Import -->
     <script type="module" src="user-script.js"></script>
 </body>
 </html>
