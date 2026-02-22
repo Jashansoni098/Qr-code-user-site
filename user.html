@@ -19,15 +19,15 @@
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
     <!-- 1. ANNOUNCEMENT POPUP (Feature: Pop-up on load) -->
-    <div id="announcement-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-content ann-popup">
-            <div class="close-icon-fixed" onclick="window.closeModal('announcement-modal')">&times;</div>
-            <div id="ann-img-container"></div>
-            <h2 id="ann-title">Special Announcement</h2>
-            <p id="ann-desc">Loading special deals for you...</p>
-            <button class="primary-btn" onclick="window.closeModal('announcement-modal')">View Today's Menu</button>
-        </div>
+  <div id="announcement-modal" class="modal-overlay" style="display:none; z-index: 9999;">
+    <div class="modal-content ann-popup">
+        <div class="close-icon" onclick="window.closeModal('announcement-modal')">&times;</div>
+        <h2 id="ann-title"></h2>
+        <p id="ann-desc"></p>
+        <button class="primary-btn" onclick="window.closeModal('announcement-modal')">Order Now</button>
     </div>
+</div>
+ 
 
     <!-- MAIN APP WRAPPER -->
     <div class="app-wrapper">
@@ -39,10 +39,10 @@
                 <div class="res-meta">
                     <h1 id="res-name-display">Restaurant Name</h1>
                     <div class="social-row">
-                        <a id="link-fb" href="#" target="_blank"><i class="fab fa-facebook"></i></a>
-                        <a id="link-ig" href="#" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a id="link-yt" href="#" target="_blank"><i class="fab fa-youtube"></i></a>
-                    </div>
+    <a id="link-fb" href="#"><i class="fab fa-facebook"></i></a>
+    <a id="link-ig" href="#"><i class="fab fa-instagram"></i></a>
+    <a id="link-yt" href="#"><i class="fab fa-youtube"></i></a>
+</div>
                 </div>
                 <div class="lang-toggle">
                     <button class="lang-btn">हिंदी</button>
@@ -53,9 +53,9 @@
             <div class="info-badges">
                 <span class="badge"><i class="fas fa-chair"></i> Table <b id="tbl-no">--</b></span>
                 <span class="badge"><i class="fas fa-clock"></i> <b id="wait-time">--</b> min</span>
-                <div id="wifi-display" class="wifi-badge">
-                    <i class="fas fa-wifi"></i> <span id="wifi-name">--</span> | <small id="wifi-pass">--</small>
-                </div>
+                <div id="wifi-display" class="wifi-badge" style="display:none;">
+    <i class="fas fa-wifi"></i> <span id="wifi-name"></span> | <small id="wifi-pass"></small>
+</div>
             </div>
         </header>
 
@@ -120,9 +120,8 @@
         <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span id="cart-badge-count">0</span><span>Basket</span></button>
         <button onclick="window.openTracking()"><i class="fas fa-route"></i><span>Tracking</span></button>
         <!-- Dynamic Login/Profile Button -->
-        <button id="nav-auth-btn" onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Account</span></button>
-        <button id="nav-profile-btn" onclick="window.openProfileModal()" style="display:none;"><i class="fas fa-id-card"></i><span>Profile</span></button>
-    </nav>
+       <button id="nav-auth-btn" onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Login</span></button>
+<button id="nav-profile-btn" onclick="window.openProfileModal()" style="display:none;"><i class="fas fa-id-card"></i><span>Profile</span></button>
 
     <!-- FLOATING CART BAR -->
     <div id="cart-bar" class="cart-floating-bar" style="display:none;" onclick="window.openCartModal()">

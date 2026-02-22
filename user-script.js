@@ -28,6 +28,16 @@ const loader = document.getElementById('loader');
 // ==========================================
 // 2. INITIALIZATION (APP START)
 // ==========================================
+// LocalStorage se cart load karein
+let cart = JSON.parse(localStorage.getItem(`platto_cart_${resId}`)) || [];
+
+window.addToCart = (name, price) => {
+    cart.push({ name, price });
+    localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
+    updateCartUI();
+    alert(name + " basket mein add ho gaya!");
+};
+
 async function init() {
     if (!resId) {
         document.body.innerHTML = "<div style='text-align:center; padding:100px;'><h3>⚠️ Invalid QR Code.</h3></div>";
@@ -45,34 +55,39 @@ async function init() {
 
     // Auth & Loyalty Sync
     onAuthStateChanged(auth, async (user) => {
-        const navAuthBtn = document.getElementById('nav-auth-btn');
-        const navProfileBtn = document.getElementById('nav-profile-btn');
+    const navAuth = document.getElementById('nav-auth-btn');
+    const navProf = document.getElementById('nav-profile-btn');
 
-        if (user) {
-            userUID = user.uid;
-            if(navAuthBtn) navAuthBtn.style.display = "none";
-            if(navProfileBtn) navProfileBtn.style.display = "flex";
-            
-            const userSnap = await getDoc(doc(db, "users", userUID));
-            if (userSnap.exists()) {
-                const data = userSnap.data();
-                userPoints = data.points || 0;
-                // Pre-fill profile fields
-                if(document.getElementById('user-profile-name')) document.getElementById('user-profile-name').value = data.name || "";
-                if(document.getElementById('user-profile-phone')) document.getElementById('user-profile-phone').value = data.phone || "";
-                if(document.getElementById('cust-name-final')) document.getElementById('cust-name-final').value = data.name || "";
-            }
-        } else {
-            userUID = localStorage.getItem('p_guest_id') || "g_" + Date.now();
-            if(!localStorage.getItem('p_guest_id')) localStorage.setItem('p_guest_id', userUID);
-            if(navAuthBtn) navAuthBtn.style.display = "flex";
-            if(navProfileBtn) navProfileBtn.style.display = "none";
+    if (user) {
+        userUID = user.uid;
+        if(navAuth) navAuth.style.display = "none";
+        if(navProf) navProf.style.display = "flex";
+        
+        const uSnap = await getDoc(doc(db, "users", userUID));
+        if(uSnap.exists()) {
+            userPoints = uSnap.data().points || 0;
+            // Profile modal ke inputs bharein
+            if(document.getElementById('user-profile-name')) 
+                document.getElementById('user-profile-name').value = uSnap.data().name || "";
         }
-        updatePointsUI();
+    }
+    updatePointsUI();
+});
         loadMenu();
         checkLiveOrders(); 
     });
     updateCartUI();
+}
+
+function handleAnnouncement() {
+    if(restaurantData.activeAnnouncement) {
+        const modal = document.getElementById('announcement-modal');
+        if(modal) {
+            modal.style.display = "flex";
+            document.getElementById('ann-title').innerText = restaurantData.annTitle || "Offer";
+            document.getElementById('ann-desc').innerText = restaurantData.annText || "";
+        }
+    }
 }
 
 // ==========================================
@@ -320,8 +335,15 @@ window.generateInvoice = (order) => {
 function updatePointsUI() {
     const ptsEl = document.getElementById('user-pts');
     const redeemBtn = document.getElementById('redeem-btn');
+    const profilePts = document.getElementById('profile-pts-display');
+
     if(ptsEl) ptsEl.innerText = userPoints;
-    if(redeemBtn) redeemBtn.disabled = userPoints < 1000;
+    if(profilePts) profilePts.innerText = userPoints;
+    
+    // Check if button exists before setting property
+    if(redeemBtn) {
+        redeemBtn.disabled = (userPoints < 1000);
+    }
 }
 
 window.redeemPoints = () => { isRedeeming = true; alert("Discount Applied!"); window.openCartModal(); };
