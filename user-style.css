@@ -11,6 +11,7 @@
     --bg: #f8fafc;
     --veg: #22c55e;
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --radius: 20px;
 }
 
 * {
@@ -41,7 +42,7 @@ body {
 }
 
 /* ==========================================
-   2. HEADER & BRANDING
+   2. HEADER, SOCIALS & WIFI
    ========================================== */
 .main-header {
     padding: 20px;
@@ -55,7 +56,7 @@ body {
     align-items: flex-start;
 }
 
-/* Logo Fix: 60px as requested */
+/* FIX: Logo Fixed 60px */
 .res-logo-img {
     width: 60px !important;
     height: 60px !important;
@@ -80,15 +81,14 @@ body {
 
 .social-row a {
     color: var(--text-muted);
-    font-size: 1.1rem;
+    font-size: 1rem;
     transition: 0.3s;
 }
 
 .social-row a:hover { color: var(--primary); }
 
-.lang-toggle { display: flex; gap: 5px; }
-
-.lang-pill {
+.lang-toggle { display: flex; gap: 4px; }
+.lang-btn {
     padding: 4px 10px;
     font-size: 0.65rem;
     border-radius: 20px;
@@ -97,12 +97,7 @@ body {
     font-weight: 700;
     cursor: pointer;
 }
-
-.lang-pill.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
+.lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
 /* Badges Bar (Table, Time, WiFi) */
 .info-badges {
@@ -110,7 +105,6 @@ body {
     gap: 8px;
     margin-top: 15px;
     flex-wrap: wrap;
-    align-items: center;
 }
 
 .badge {
@@ -119,9 +113,10 @@ body {
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
+    color: #475569;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
 .wifi-badge {
@@ -131,12 +126,15 @@ body {
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* ==========================================
-   3. SEARCH & CATEGORIES
+   3. SEARCH & DYNAMIC CATEGORIES
    ========================================== */
-.menu-search-container { padding: 15px 20px; }
+.menu-search-container { padding: 15px 20px 5px; }
 
 .search-inner {
     background: #f1f5f9;
@@ -156,7 +154,7 @@ body {
     font-size: 0.95rem;
 }
 
-/* Horizontal Category Scroll */
+/* Horizontal Scroll Categories */
 .category-nav {
     padding: 10px 0 15px 20px;
     background: white;
@@ -213,36 +211,22 @@ body {
 }
 
 .pts-circle {
-    background: white;
-    width: 55px; height: 55px;
-    border-radius: 50%;
-    display: flex; flex-direction: column;
+    background: white; width: 55px; height: 55px;
+    border-radius: 50%; display: flex; flex-direction: column;
     justify-content: center; align-items: center;
-    border: 2px solid var(--primary);
-    flex-shrink: 0;
+    border: 2px solid var(--primary); flex-shrink: 0;
 }
-
 .pts-circle h2 { margin: 0; color: var(--primary); font-size: 1.1rem; }
-.pts-circle small { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; }
+.pts-circle small { font-size: 0.6rem; font-weight: 800; }
 
 .pts-details p { font-size: 0.8rem; font-weight: 700; color: #be123c; margin: 0; }
 .pts-details small { font-size: 0.7rem; color: #e11d48; font-weight: 600; }
 
 #redeem-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    cursor: pointer;
+    background: var(--primary); color: white; border: none;
+    padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;
 }
-
-#redeem-btn:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-}
+#redeem-btn:disabled { background: #94a3b8; cursor: not-allowed; }
 
 /* ==========================================
    5. FOOD GRID (2-COLUMNS)
@@ -267,17 +251,12 @@ body {
 .food-card:active { transform: scale(0.96); }
 
 .food-img { width: 100%; height: 110px; object-fit: cover; }
-
 .food-info { padding: 12px; }
 .food-info h4 {
     margin: 0; font-size: 0.85rem; font-weight: 800;
-    height: 40px; overflow: hidden; color: var(--dark);
+    height: 38px; overflow: hidden; color: var(--dark);
 }
-
-.food-price {
-    color: var(--primary); font-weight: 800;
-    font-size: 1rem; margin-top: 8px; display: block;
-}
+.food-price { color: var(--primary); font-weight: 800; font-size: 1rem; margin-top: 8px; display: block; }
 
 /* ==========================================
    6. MODALS & BOTTOM SHEETS
@@ -296,7 +275,7 @@ body {
     background: var(--white);
     width: 100%; max-width: 500px;
     padding: 25px;
-    border-radius: 30px 30px 0 0;
+    border-radius: 25px 25px 0 0;
     max-height: 90vh;
     overflow-y: auto;
     animation: slideUp 0.3s ease-out;
@@ -310,37 +289,41 @@ body {
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .close-x, .close-icon-fixed { font-size: 1.8rem; color: var(--gray); cursor: pointer; }
 
-/* Customization Sheet */
+/* Customize Sheet Logic */
 .section-title { font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: block; }
 .options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 .option-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 15px; background: #f8fafc; border-radius: 16px;
+    padding: 12px 15px; background: #f8fafc; border-radius: 12px;
     font-weight: 700; cursor: pointer;
 }
 .option-row input { accent-color: var(--primary); width: 20px; height: 20px; }
 
 /* ==========================================
-   7. CHECKOUT & DELIVERY
+   7. CHECKOUT, DELIVERY & COUPONS
    ========================================== */
 .type-selection { display: flex; gap: 10px; margin-bottom: 20px; }
 .type-btn {
     flex: 1; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;
-    background: white; font-weight: 800; cursor: pointer;
+    background: white; font-weight: 800; cursor: pointer; font-family: inherit;
 }
 .type-btn.active { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
 
-.pay-modes { display: flex; gap: 10px; margin: 15px 0; }
+.pay-modes { display: flex; gap: 12px; margin: 15px 0; }
 .pay-choice {
     flex: 1; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;
     background: white; font-weight: 800; cursor: pointer;
 }
 .pay-choice.selected { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
 
-.redeem-box { background: #f0fdf4; border: 1.5px dashed #22c55e; padding: 15px; border-radius: 16px; margin-bottom: 15px; }
+.summary-card { padding: 15px; background: #f8fafc; border-radius: 16px; margin-top: 15px; }
+.sum-line { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+.total { font-weight: 800; font-size: 1rem; color: var(--dark); margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd; }
+
+.redeem-box { background: #f0fdf4; border: 1.5px dashed #22c55e; padding: 15px; border-radius: 16px; margin-bottom: 15px; text-align: center; }
 
 /* ==========================================
-   8. BOTTOM NAVIGATION & CART
+   8. BOTTOM NAVIGATION & FLOATING CART
    ========================================== */
 .app-bottom-nav {
     position: fixed; bottom: 0; left: 50%;
@@ -361,7 +344,7 @@ body {
     position: fixed; bottom: 85px; left: 50%;
     transform: translateX(-50%); width: 92%;
     max-width: 460px; background: var(--dark);
-    color: white; padding: 18px 25px; border-radius: 20px;
+    color: white; padding: 16px 20px; border-radius: 18px;
     display: flex; justify-content: space-between; align-items: center;
     z-index: 1500; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
@@ -395,9 +378,8 @@ body {
 .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* History & Socials */
 .history-scroll { max-height: 450px; overflow-y: auto; text-align: left; }
-.history-item { padding: 18px; border-bottom: 1px solid #f1f5f9; }
+.history-item { padding: 15px; border-bottom: 1px solid #f1f5f9; }
 
 .footer-info { padding: 40px 20px; background: white; border-top: 1px solid #f1f5f9; text-align: center; }
 .btn-wa { color: #22c55e; text-decoration: none; font-weight: 700; border: 1.5px solid #22c55e; padding: 10px 20px; border-radius: 14px; display: inline-block; }
