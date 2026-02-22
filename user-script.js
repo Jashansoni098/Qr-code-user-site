@@ -13,6 +13,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const resId = urlParams.get('resId');
 const tableNo = urlParams.get('table') || "01";
 
+// FIX: Only one declaration of cart
 let cart = JSON.parse(localStorage.getItem(`platto_cart_${resId}`)) || [];
 let restaurantData = {};
 let selectedPaymentMode = "";
@@ -28,8 +29,6 @@ const loader = document.getElementById('loader');
 // ==========================================
 // 2. INITIALIZATION (APP START)
 // ==========================================
-// LocalStorage se cart load karein
-let cart = JSON.parse(localStorage.getItem(`platto_cart_${resId}`)) || [];
 
 window.addToCart = (name, price) => {
     cart.push({ name, price });
@@ -55,24 +54,25 @@ async function init() {
 
     // Auth & Loyalty Sync
     onAuthStateChanged(auth, async (user) => {
-    const navAuth = document.getElementById('nav-auth-btn');
-    const navProf = document.getElementById('nav-profile-btn');
+        const navAuth = document.getElementById('nav-auth-btn');
+        const navProf = document.getElementById('nav-profile-btn');
 
-    if (user) {
-        userUID = user.uid;
-        if(navAuth) navAuth.style.display = "none";
-        if(navProf) navProf.style.display = "flex";
-        
-        const uSnap = await getDoc(doc(db, "users", userUID));
-        if(uSnap.exists()) {
-            userPoints = uSnap.data().points || 0;
-            // Profile modal ke inputs bharein
-            if(document.getElementById('user-profile-name')) 
-                document.getElementById('user-profile-name').value = uSnap.data().name || "";
+        if (user) {
+            userUID = user.uid;
+            if(navAuth) navAuth.style.display = "none";
+            if(navProf) navProf.style.display = "flex";
+            
+            const uSnap = await getDoc(doc(db, "users", userUID));
+            if(uSnap.exists()) {
+                userPoints = uSnap.data().points || 0;
+                if(document.getElementById('user-profile-name')) 
+                    document.getElementById('user-profile-name').value = uSnap.data().name || "";
+            }
+        } else {
+            if(navAuth) navAuth.style.display = "flex";
+            if(navProf) navProf.style.display = "none";
         }
-    }
-    updatePointsUI();
-});
+        updatePointsUI();
         loadMenu();
         checkLiveOrders(); 
     });
@@ -100,14 +100,12 @@ function renderBranding() {
     if(document.getElementById('tbl-no')) document.getElementById('tbl-no').innerText = tableNo;
     if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
     
-    // WiFi Display
     const wifiBox = document.getElementById('wifi-display');
     if(restaurantData.wifiName && wifiBox) {
         wifiBox.style.display = "flex";
         document.getElementById('wifi-name').innerText = restaurantData.wifiName;
         document.getElementById('wifi-pass').innerText = restaurantData.wifiPass;
     }
-    // Social Links
     if(document.getElementById('link-fb')) document.getElementById('link-fb').href = restaurantData.fbLink || "#";
     if(document.getElementById('link-ig')) document.getElementById('link-ig').href = restaurantData.igLink || "#";
     if(document.getElementById('link-yt')) document.getElementById('link-yt').href = restaurantData.ytLink || "#";
@@ -117,6 +115,7 @@ function renderBranding() {
 function renderCategories() {
     const list = document.getElementById('categories-list');
     if(restaurantData.categories && list) {
+        list.innerHTML = `<button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>`;
         restaurantData.categories.forEach(cat => {
             list.innerHTML += `<button class="cat-pill" onclick="window.filterByCategory('${cat}', this)">${cat}</button>`;
         });
@@ -124,7 +123,7 @@ function renderCategories() {
 }
 
 // ==========================================
-// 4. MENU & CUSTOMIZATION (S/M/L & EXTRAS)
+// 4. MENU & CUSTOMIZATION
 // ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
@@ -132,15 +131,12 @@ function loadMenu(category = 'All') {
         if(!grid) return;
         grid.innerHTML = "";
         
-        const vegToggle = document.getElementById('veg-toggle');
-        const isVegOnly = vegToggle ? vegToggle.checked : false;
         const searchInput = document.getElementById('menu-search');
         const search = searchInput ? searchInput.value.toLowerCase() : "";
 
         snap.forEach(d => {
             const item = d.data();
             if(category !== 'All' && item.category !== category) return;
-            if(isVegOnly && !item.name.toLowerCase().includes('veg')) return;
             if(search && !item.name.toLowerCase().includes(search)) return;
 
             grid.innerHTML += `
@@ -160,12 +156,10 @@ window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
     document.getElementById('cust-item-name').innerText = item.name;
     
-    // Set Size Prices
     if(document.getElementById('p-price-s')) document.getElementById('p-price-s').innerText = "₹" + item.price;
     if(document.getElementById('p-price-m')) document.getElementById('p-price-m').innerText = "₹" + (parseInt(item.price) + 50);
     if(document.getElementById('p-price-l')) document.getElementById('p-price-l').innerText = "₹" + (parseInt(item.price) + 100);
 
-    // Load Extras from Owner Variants
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
         extrasDiv.innerHTML = "";
@@ -213,7 +207,7 @@ function updateCartUI() {
     const cartBar = document.getElementById('cart-bar');
     if(cart.length > 0 && cartBar) {
         cartBar.style.display = "flex";
-        document.getElementById('cart-qty').innerText = cart.length;
+        document.getElementById('cart-qty').innerText = cart.length + " Items";
         document.getElementById('cart-total').innerText = totalAmt;
         document.getElementById('cart-badge-count').innerText = cart.length;
     } else if(cartBar) {
@@ -228,8 +222,11 @@ window.openCartModal = () => {
     list.innerHTML = cart.length === 0 ? "<p style='padding:20px;'>Basket is empty</p>" : "";
     let subtotal = 0;
     cart.forEach((item, index) => {
-        subtotal += item.price;
-        list.innerHTML += `<div class="cart-item" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${item.name}</span><b>₹${item.price}</b> <button onclick="window.removeItem(${index})">❌</button></div>`;
+        subtotal += parseInt(item.price);
+        list.innerHTML += `<div class="cart-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
+            <span>${item.name}</span>
+            <div><b>₹${item.price}</b> <button onclick="window.removeItem(${index})" style="background:none; border:none; margin-left:10px;">❌</button></div>
+        </div>`;
     });
     document.getElementById('summary-subtotal').innerText = "₹" + subtotal;
     document.getElementById('summary-total').innerText = "₹" + (isRedeeming ? subtotal - 10 : subtotal);
@@ -239,7 +236,8 @@ window.openCartModal = () => {
 window.removeItem = (index) => {
     cart.splice(index, 1);
     localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
-    updateCartUI(); window.openCartModal();
+    updateCartUI(); 
+    window.openCartModal();
 };
 
 window.openCheckoutModal = () => {
@@ -250,7 +248,6 @@ window.openCheckoutModal = () => {
     document.getElementById('final-amt').innerText = isRedeeming ? subtotal - 10 : subtotal;
 };
 
-// Delivery Logic: ₹300 Min 
 window.setOrderType = (type) => {
     orderType = type;
     const subtotal = cart.reduce((s, i) => s + parseInt(i.price), 0);
@@ -263,9 +260,9 @@ window.setOrderType = (type) => {
             window.setOrderType('Pickup');
             return;
         }
-        document.getElementById('delivery-info').style.display = "block";
+        document.getElementById('delivery-address-box').style.display = "block";
     } else {
-        document.getElementById('delivery-info').style.display = "none";
+        document.getElementById('delivery-address-box').style.display = "none";
     }
 };
 
@@ -274,16 +271,19 @@ window.setPayMode = (mode) => {
     document.getElementById('mode-online').classList.toggle('selected', mode === 'Online');
     document.getElementById('mode-cash').classList.toggle('selected', mode === 'Cash');
     if(mode === 'Online') {
-        document.getElementById('qr-area').style.display = "block";
-        const qrDiv = document.getElementById('payment-qr'); qrDiv.innerHTML = "";
+        document.getElementById('payment-qr-area').style.display = "block";
+        const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
         const amt = document.getElementById('final-amt').innerText;
         new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
-    } else { document.getElementById('qr-area').style.display = "none"; }
-    document.getElementById('final-confirm-btn').disabled = false;
+        document.getElementById('final-upi-id').innerText = restaurantData.upiId;
+    } else { 
+        document.getElementById('payment-qr-area').style.display = "none"; 
+    }
+    document.getElementById('final-place-btn').disabled = false;
 };
 
 // ==========================================
-// 6. ORDER CONFIRMATION & INVOICE
+// 6. ORDER CONFIRMATION
 // ==========================================
 window.confirmOrder = async () => {
     const name = document.getElementById('cust-name-final').value;
@@ -302,13 +302,14 @@ window.confirmOrder = async () => {
     try {
         await addDoc(collection(db, "orders"), orderData);
         
-        // Update Loyalty: Earn 10 per 100
         const earned = Math.floor(parseInt(finalTotal) / 100) * 10;
-        const userRef = doc(db, "users", userUID);
-        const snap = await getDoc(userRef);
-        let pts = snap.exists() ? snap.data().points : 0;
-        if(isRedeeming) pts -= 1000;
-        await setDoc(userRef, { points: pts + earned }, { merge: true });
+        if(userUID) {
+            const userRef = doc(db, "users", userUID);
+            const snap = await getDoc(userRef);
+            let pts = snap.exists() ? snap.data().points : 0;
+            if(isRedeeming) pts -= 1000;
+            await setDoc(userRef, { points: pts + earned }, { merge: true });
+        }
 
         localStorage.removeItem(`platto_cart_${resId}`);
         cart = [];
@@ -320,33 +321,21 @@ window.confirmOrder = async () => {
     if(loader) loader.style.display = "none";
 };
 
-// Feature 7: Digital Invoice
-window.generateInvoice = (order) => {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    pdf.text(`${restaurantData.name} - Bill`, 10, 10);
-    pdf.text(`Table: ${order.table} | Total: ₹${order.total}`, 10, 20);
-    pdf.save("Bill.pdf");
-};
-
 // ==========================================
 // 7. UTILS & HELPERS
 // ==========================================
 function updatePointsUI() {
     const ptsEl = document.getElementById('user-pts');
     const redeemBtn = document.getElementById('redeem-btn');
-    const profilePts = document.getElementById('profile-pts-display');
-
     if(ptsEl) ptsEl.innerText = userPoints;
-    if(profilePts) profilePts.innerText = userPoints;
-    
-    // Check if button exists before setting property
-    if(redeemBtn) {
-        redeemBtn.disabled = (userPoints < 1000);
-    }
+    if(redeemBtn) redeemBtn.disabled = (userPoints < 1000);
 }
 
-window.redeemPoints = () => { isRedeeming = true; alert("Discount Applied!"); window.openCartModal(); };
+window.redeemPoints = () => { 
+    isRedeeming = true; 
+    alert("Discount Applied! Redeming 1000 points."); 
+    window.openCartModal(); 
+};
 
 window.filterByCategory = (cat, btn) => {
     document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
@@ -366,7 +355,7 @@ window.openHistoryModal = async () => {
     snap.forEach(d => {
         const o = d.data();
         const date = o.timestamp ? o.timestamp.toDate().toLocaleDateString('en-GB') : "Old";
-        list.innerHTML += `<div class="history-item"><b>${date}</b> - ₹${o.total} [${o.status}] <button onclick='window.generateInvoice(${JSON.stringify(o)})' style='float:right;'>PDF</button></div>`;
+        list.innerHTML += `<div class="history-item"><b>${date}</b> - ₹${o.total} [${o.status}]</div>`;
     });
     document.getElementById('trackingModal').style.display = "flex";
 };
@@ -375,7 +364,7 @@ function checkLiveOrders() {
     if(!userUID) return;
     const q = query(collection(db, "orders"), where("userUID", "==", userUID));
     onSnapshot(q, (snap) => {
-        // Updated via history modal shared logic
+        // Real-time tracking can be added here
     });
 }
 
@@ -401,17 +390,6 @@ window.setAuthMode = (mode) => {
     document.getElementById('tab-login').classList.toggle('active', mode === 'login');
     document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
 };
-
-function handleAnnouncement() {
-    if(restaurantData.activeAnnouncement) {
-        const modal = document.getElementById('announcement-modal');
-        if(modal) {
-            modal.style.display = "flex";
-            document.getElementById('ann-title').innerText = restaurantData.annTitle;
-            document.getElementById('ann-desc').innerText = restaurantData.annText;
-        }
-    }
-}
 
 window.closeModal = (id) => { const m = document.getElementById(id); if(m) m.style.display = "none"; };
 window.openAuthModal = () => document.getElementById('authModal').style.display = "flex";
