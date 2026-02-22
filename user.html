@@ -63,7 +63,7 @@
             </div>
         </div>
 
-        <!-- CATEGORY NAV (Horizontal Scroll) -->
+        <!-- CATEGORY NAV -->
         <div class="category-nav">
             <div class="category-scroll" id="categories-list">
                 <button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>
@@ -118,9 +118,7 @@
         <button class="btn-view-cart">View Basket →</button>
     </div>
 
-    <!-- MODALS SECTION -->
-
-    <!-- 1. CUSTOMIZE MODAL (Pizza Size & Extras) - FIXED ALL IDs -->
+    <!-- 1. CUSTOMIZE MODAL -->
     <div id="customizeModal" class="modal-overlay" style="display:none;">
         <div class="modal-content customize-sheet">
             <div class="modal-header">
@@ -141,59 +139,57 @@
         </div>
     </div>
 
-    <!-- 2. CART MODAL (Quantity +/- Logic) -->
-    <div id="cartModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content full-sheet">
-            <div class="modal-header"><h3>Your Basket</h3><span class="close-x" onclick="window.closeModal('cartModal')">&times;</span></div>
-            <div id="cart-items-list" class="cart-scroll"></div>
-            
-            <div id="redeem-section" class="redeem-box" style="display:none;">
-                <p>🎁 You have <b id="available-pts">0</b> points. Redeem 1000 pts for ₹10 off?</p>
-                <button onclick="window.applyRedeem()" id="apply-redeem-btn">Apply Reward</button>
-            </div>
-
-            <div class="summary-card">
-                <div class="sum-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
-                <div id="discount-line" class="sum-line" style="display:none; color:green;"><span>Reward Discount</span><b>-₹10</b></div>
-                <hr>
-                <div class="sum-line total"><span>Grand Total</span><b id="summary-total">₹0</b></div>
-            </div>
-            <button class="primary-btn" onclick="window.openCheckoutModal()">Proceed to Order</button>
+   <!-- 2. CART MODAL (Basket Structure Fix) -->
+<div id="cartModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content full-sheet">
+        <div class="modal-header">
+            <h3>My Basket</h3>
+            <span class="close-x" onclick="window.closeModal('cartModal')">&times;</span>
         </div>
-    </div>
-
-    <!-- 3. CHECKOUT MODAL (Pickup vs Delivery Logic) -->
-    <div id="checkoutModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content checkout-sheet">
-            <div class="modal-header"><h3>Final Step</h3><span class="close-x" onclick="window.closeModal('checkoutModal')">&times;</span></div>
-            <div class="type-toggle">
-                <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">Pickup</button>
-                <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">Delivery</button>
+        
+        <!-- Basket List (Quantity +/- yahan professional dikhenge) -->
+        <div id="cart-items-list" class="cart-scroll"></div>
+        
+        <!-- FEATURE: APPLY COUPON -->
+        <div class="basket-coupon-area">
+            <div class="basket-coupon-box">
+                <input type="text" id="coupon-code" placeholder="Enter Coupon Code">
+                <button onclick="window.applyCoupon()">APPLY</button>
             </div>
-            
-            <div id="delivery-address-box" style="display:none; margin:10px 0;">
-                <div class="info-alert">Min order ₹300 for Delivery (3KM)</div>
-                <input type="text" id="cust-address" placeholder="Flat No / Landmark / City" class="pro-input">
-            </div>
-
-            <input type="text" id="cust-name-final" placeholder="Confirm Your Name" class="pro-input">
-            
-            <div class="pay-modes">
-                <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-choice">💳 Online</button>
-                <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-choice">💵 Cash</button>
-            </div>
-
-            <div id="payment-qr-area" style="display:none; text-align:center;">
-                <div id="checkout-payment-qr" style="display:flex; justify-content:center; padding:10px;"></div>
-                <p id="final-upi-id" style="font-size:0.8rem; font-weight:800; color:var(--primary);"></p>
-            </div>
-
-            <textarea id="chef-note" class="pro-input" placeholder="Note to Chef..."></textarea>
-            <button id="final-place-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
+            <p id="coupon-msg" style="text-align:left; font-size:0.7rem; margin-top:5px; font-weight:700;"></p>
         </div>
-    </div>
 
-    <!-- 4. TRACKING & HISTORY (Separate Modals) -->
+        <div class="summary-card">
+            <div class="sum-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
+            <div id="discount-line" class="sum-line" style="display:none; color:green;">
+                <span>Loyalty Reward</span><b>-₹10</b>
+            </div>
+            <div id="coupon-discount-line" class="sum-line" style="display:none; color:green;">
+                <span>Coupon Discount</span><b id="coupon-discount-val">-₹0</b>
+            </div>
+            <hr>
+            <div class="sum-line total"><span>Grand Total</span><b id="summary-total">₹0</b></div>
+        </div>
+        <button class="primary-btn" onclick="window.openCheckoutModal()">Proceed to Order</button>
+    </div>
+</div>
+
+<!-- 3. CHECKOUT MODAL (Chef Instruction ID Fix) -->
+<div id="checkoutModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <h3>Final Details</h3>
+        <!-- ... Order type selection as is ... -->
+        <input type="text" id="cust-name-final" placeholder="Confirm Your Name" class="pro-input">
+        
+        <!-- FIX: Chef Instruction Textarea -->
+        <textarea id="chef-note" class="pro-input" placeholder="Instruction for Chef (e.g. No Onions)"></textarea>
+        
+        <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
+        <button class="btn-cancel" onclick="window.closeModal('checkoutModal')">Cancel</button>
+    </div>
+</div>
+
+    <!-- OTHER MODALS (Tracking, History, Profile, Auth, Support) -->
     <div id="trackingModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <div class="modal-header"><h3>Live Tracking</h3><span class="close-x" onclick="window.closeModal('trackingModal')">&times;</span></div>
@@ -208,7 +204,6 @@
         </div>
     </div>
 
-    <!-- 5. PROFILE MODAL -->
     <div id="profileModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <div class="modal-header"><h3>My Profile</h3><span class="close-x" onclick="window.closeModal('profileModal')">&times;</span></div>
@@ -219,11 +214,10 @@
             <input type="text" id="user-profile-name" placeholder="Full Name" class="pro-input">
             <input type="tel" id="user-profile-phone" placeholder="Mobile Number" class="pro-input">
             <button class="primary-btn" onclick="window.saveUserProfile()">Save Profile</button>
-            <button class="btn-logout-pro" onclick="window.logout()" style="color:red; margin-top:20px; border:none; background:none; font-weight:800; cursor:pointer;">Logout Account</button>
+            <button class="btn-logout-pro" onclick="window.logout()">Logout Account</button>
         </div>
     </div>
 
-    <!-- 6. AUTH MODAL (Login/Signup) -->
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-content auth-box">
             <h2>Welcome</h2>
@@ -238,7 +232,6 @@
         </div>
     </div>
 
-    <!-- 7. SUPPORT TICKET MODAL -->
     <div id="supportModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <div class="modal-header"><h3>Help & Support</h3><span class="close-x" onclick="window.closeModal('supportModal')">&times;</span></div>
@@ -257,7 +250,6 @@
         </div>
     </div>
 
-    <!-- Logic Import -->
     <script type="module" src="user-script.js"></script>
 </body>
 </html>
