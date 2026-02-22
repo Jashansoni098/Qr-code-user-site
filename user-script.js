@@ -561,10 +561,15 @@ window.logout = () => signOut(auth).then(() => location.reload());
 window.closeModal = (id) => showEl(id, false);
 window.openAuthModal = () => showFlex('authModal');
 window.openProfileModal = () => showFlex('profileModal');
-window.filterByCategory = (cat, btn) => {
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    loadMenu(cat);
+window.filterByCategory = (category, btn) => {
+
+    document.querySelectorAll('.cat-pill').forEach(b => 
+        b.classList.remove('active')
+    );
+
+    if (btn) btn.classList.add('active');
+
+    loadMenu(category);
 };
 
 function handleAnnouncement() {
