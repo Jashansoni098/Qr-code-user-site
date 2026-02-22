@@ -388,3 +388,131 @@ body {
 .btn-wa { color: #22c55e; text-decoration: none; font-weight: 700; border: 1.5px solid #22c55e; padding: 10px 20px; border-radius: 14px; display: inline-block; }
 .btn-ticket { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; }
 .btn-logout-pro { background: #fee2e2; color: var(--primary); border: none; padding: 10px; border-radius: 12px; font-weight: 700; margin-top: 15px; width: 100%; cursor: pointer; }
+/* ==========================================
+   11. PROFESSIONAL BASKET LIST
+   ========================================== */
+
+/* Basket Scroll Area */
+.cart-list {
+    margin: 15px 0;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Basket Item Card */
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #f1f5f9;
+}
+
+/* Item Info */
+.item-info-box {
+    flex: 1;
+    text-align: left;
+}
+
+.item-info-box b {
+    font-size: 0.9rem;
+    color: var(--dark);
+    display: block;
+}
+
+.item-info-box small {
+    color: var(--text-muted); /* FIXED: var(--gray removed */
+    font-size: 0.75rem;
+}
+
+/* Premium Quantity Controller */
+.qty-wrapper {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 2px;
+    margin: 0 10px;
+}
+
+.qty-btn-basket {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--primary);
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qty-btn-basket:active {
+    transform: scale(0.9);
+}
+
+.qty-number {
+    font-weight: 800;
+    font-size: 0.9rem;
+    min-width: 25px;
+    text-align: center;
+    color: var(--dark);
+}
+
+/* Item Total Price */
+.item-total-price {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--dark);
+    min-width: 60px;
+    text-align: right;
+}
+
+/* Basket Coupon Section */
+.basket-coupon-section {
+    background: #f1f5f9;
+    padding: 12px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.basket-coupon-box {
+    display: flex;
+    gap: 8px;
+}
+
+.basket-coupon-box input {
+    flex: 1;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.basket-coupon-box button {
+    background: var(--dark);
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.basket-coupon-msg {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-top: 5px;
+    display: block;
+}
