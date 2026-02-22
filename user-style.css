@@ -1,4 +1,4 @@
-/* ==========================================
+,,,/* ==========================================
    1. CORE VARIABLES & RESET
    ========================================== */
 :root {
@@ -417,3 +417,62 @@ body {
 
 .history-scroll { max-height: 450px; overflow-y: auto; text-align: left; }
 .history-item { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+
+/* Professional Order Type Switcher */
+.type-selection {
+    display: flex;
+    gap: 12px;
+    margin: 15px 0 25px;
+    background: #f1f5f9;
+    padding: 6px;
+    border-radius: 18px;
+}
+
+.type-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.type-btn i {
+    font-size: 1.2rem;
+}
+
+.type-btn span {
+    font-weight: 800;
+    font-size: 0.85rem;
+}
+
+/* Selected State */
+.type-btn.active {
+    background: white;
+    color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15);
+}
+
+/* Delivery info alert */
+.info-alert {
+    background: #fffbeb;
+    color: #92400e;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    border: 1px solid #fde68a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

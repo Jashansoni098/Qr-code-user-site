@@ -180,10 +180,17 @@
         <div class="modal-header"><h3>Order Details</h3><span class="close-x" onclick="window.closeModal('checkoutModal')">&times;</span></div>
         
         <p class="section-label">Order Type</p>
-        <div class="type-selection">
-            <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">Pickup</button>
-            <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">Delivery</button>
-        </div>
+        <p class="section-label">Choose Order Type</p>
+<div class="type-selection">
+    <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">
+        <i class="fas fa-store"></i>
+        <span>Pickup</span>
+    </button>
+    <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">
+        <i class="fas fa-motorcycle"></i>
+        <span>Delivery</span>
+    </button>
+</div>
 
         <div id="delivery-address-box" style="display:none; margin:10px 0;">
             <div class="info-alert">Min order ₹300 for Delivery (3KM)</div>

@@ -282,13 +282,26 @@ window.openCheckoutModal = () => {
 
 window.setOrderType = (type) => {
     orderType = type;
-    document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
-    document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
+    
+    // UI Update
+    const btnP = document.getElementById('type-pickup');
+    const btnD = document.getElementById('type-delivery');
+    const delBox = document.getElementById('delivery-address-box');
+
+    if(btnP) btnP.classList.toggle('active', type === 'Pickup');
+    if(btnD) btnD.classList.toggle('active', type === 'Delivery');
+
     if(type === 'Delivery') {
-        const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-        if(sub < 300) { alert("Min ₹300 for delivery!"); window.setOrderType('Pickup'); return; }
-        showEl('delivery-address-box');
-    } else showEl('delivery-address-box', false);
+        const subtotal = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
+        if(subtotal < 300) {
+            alert("Delivery ke liye minimum order ₹300 hona chahiye!");
+            window.setOrderType('Pickup'); // Force back to pickup
+            return;
+        }
+        if(delBox) delBox.style.display = "block";
+    } else {
+        if(delBox) delBox.style.display = "none";
+    }
 };
 
 window.setPayMode = (mode) => {
