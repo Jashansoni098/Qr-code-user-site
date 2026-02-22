@@ -11,7 +11,6 @@
     --bg: #f8fafc;
     --veg: #22c55e;
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    --radius: 20px;
 }
 
 * {
@@ -19,6 +18,7 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
 
 body {
@@ -29,19 +29,19 @@ body {
     overflow-x: hidden;
 }
 
-/* Centralized App Wrapper (Mobile View feel on Desktop) */
+/* App Wrapper for Mobile feel on Desktop */
 .app-wrapper {
     max-width: 500px;
     margin: 0 auto;
     background: var(--white);
     min-height: 100vh;
-    padding-bottom: 110px; /* Space for Bottom Nav & Floating Cart */
+    padding-bottom: 110px; /* Space for Bottom Nav */
     position: relative;
     box-shadow: 0 0 50px rgba(0,0,0,0.05);
 }
 
 /* ==========================================
-   2. HEADER, SOCIALS & WIFI
+   2. HEADER & BRANDING
    ========================================== */
 .main-header {
     padding: 20px;
@@ -55,12 +55,13 @@ body {
     align-items: flex-start;
 }
 
+/* Logo Fix: 60px as requested */
 .res-logo-img {
     width: 60px !important;
     height: 60px !important;
     border-radius: 14px;
     object-fit: cover;
-    border: 1.5px solid #f1f5f9;
+    border: 1px solid #f1f5f9;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
@@ -79,14 +80,15 @@ body {
 
 .social-row a {
     color: var(--text-muted);
-    font-size: 1rem;
+    font-size: 1.1rem;
     transition: 0.3s;
 }
 
 .social-row a:hover { color: var(--primary); }
 
-.lang-toggle { display: flex; gap: 4px; }
-.lang-btn {
+.lang-toggle { display: flex; gap: 5px; }
+
+.lang-pill {
     padding: 4px 10px;
     font-size: 0.65rem;
     border-radius: 20px;
@@ -95,7 +97,12 @@ body {
     font-weight: 700;
     cursor: pointer;
 }
-.lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.lang-pill.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
 
 /* Badges Bar (Table, Time, WiFi) */
 .info-badges {
@@ -103,6 +110,7 @@ body {
     gap: 8px;
     margin-top: 15px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .badge {
@@ -111,10 +119,9 @@ body {
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
-    color: #475569;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .wifi-badge {
@@ -124,15 +131,12 @@ body {
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 5px;
 }
 
 /* ==========================================
-   3. SEARCH & CATEGORY NAVIGATION
+   3. SEARCH & CATEGORIES
    ========================================== */
-.menu-search-container { padding: 15px 20px 5px; }
+.menu-search-container { padding: 15px 20px; }
 
 .search-inner {
     background: #f1f5f9;
@@ -152,7 +156,7 @@ body {
     font-size: 0.95rem;
 }
 
-/* Swiggy Style Category Scroll */
+/* Horizontal Category Scroll */
 .category-nav {
     padding: 10px 0 15px 20px;
     background: white;
@@ -192,10 +196,10 @@ body {
 }
 
 .hero-section { padding: 0 20px 20px; }
-.hero-img { width: 100%; border-radius: 20px; height: 150px; object-fit: cover; }
+.hero-img { width: 100%; border-radius: 20px; height: 140px; object-fit: cover; }
 
 /* ==========================================
-   4. LOYALTY SECTION
+   4. LOYALTY CARD
    ========================================== */
 .loyalty-container { padding: 0 20px; margin-bottom: 20px; }
 .loyalty-card {
@@ -209,11 +213,15 @@ body {
 }
 
 .pts-circle {
-    background: white; width: 55px; height: 55px;
-    border-radius: 50%; display: flex; flex-direction: column;
+    background: white;
+    width: 55px; height: 55px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
     justify-content: center; align-items: center;
-    border: 2px solid var(--primary); flex-shrink: 0;
+    border: 2px solid var(--primary);
+    flex-shrink: 0;
 }
+
 .pts-circle h2 { margin: 0; color: var(--primary); font-size: 1.1rem; }
 .pts-circle small { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; }
 
@@ -221,10 +229,20 @@ body {
 .pts-details small { font-size: 0.7rem; color: #e11d48; font-weight: 600; }
 
 #redeem-btn {
-    background: var(--primary); color: white; border: none;
-    padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
 }
-#redeem-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+#redeem-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
 
 /* ==========================================
    5. FOOD GRID (2-COLUMNS)
@@ -248,14 +266,18 @@ body {
 
 .food-card:active { transform: scale(0.96); }
 
-.food-img { width: 100%; height: 115px; object-fit: cover; }
+.food-img { width: 100%; height: 110px; object-fit: cover; }
+
 .food-info { padding: 12px; }
 .food-info h4 {
     margin: 0; font-size: 0.85rem; font-weight: 800;
-    height: 38px; overflow: hidden; color: var(--dark);
-    line-height: 1.2;
+    height: 40px; overflow: hidden; color: var(--dark);
 }
-.food-price { color: var(--primary); font-weight: 800; font-size: 1rem; margin-top: 8px; display: block; }
+
+.food-price {
+    color: var(--primary); font-weight: 800;
+    font-size: 1rem; margin-top: 8px; display: block;
+}
 
 /* ==========================================
    6. MODALS & BOTTOM SHEETS
@@ -267,7 +289,7 @@ body {
     backdrop-filter: blur(4px);
     z-index: 3000;
     display: flex; justify-content: center;
-    align-items: flex-end; /* Mobile Drawer Effect */
+    align-items: flex-end; /* Bottom Sheet Effect */
 }
 
 .modal-content {
@@ -285,11 +307,10 @@ body {
     to { transform: translateY(0); }
 }
 
-/* Modals Utilities */
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .close-x, .close-icon-fixed { font-size: 1.8rem; color: var(--gray); cursor: pointer; }
 
-/* Customization Options (Size S/M/L & Extras) */
+/* Customization Sheet */
 .section-title { font-weight: 800; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: block; }
 .options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 .option-row {
@@ -300,30 +321,26 @@ body {
 .option-row input { accent-color: var(--primary); width: 20px; height: 20px; }
 
 /* ==========================================
-   7. CHECKOUT, DELIVERY & COUPONS
+   7. CHECKOUT & DELIVERY
    ========================================== */
 .type-selection { display: flex; gap: 10px; margin-bottom: 20px; }
 .type-btn {
-    flex: 1; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;
-    background: white; font-weight: 800; cursor: pointer; font-family: inherit;
+    flex: 1; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;
+    background: white; font-weight: 800; cursor: pointer;
 }
 .type-btn.active { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
 
-.pay-modes { display: flex; gap: 12px; margin: 15px 0; }
+.pay-modes { display: flex; gap: 10px; margin: 15px 0; }
 .pay-choice {
     flex: 1; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;
     background: white; font-weight: 800; cursor: pointer;
 }
 .pay-choice.selected { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
 
-.coupon-box { display: flex; background: #f1f5f9; padding: 6px; border-radius: 16px; margin: 15px 0; }
-.coupon-box input { flex: 1; border: none; background: transparent; padding: 10px; font-weight: 700; outline: none; }
-.coupon-box button { background: var(--dark); color: white; border: none; padding: 0 15px; border-radius: 10px; font-weight: 700; }
-
-.redeem-box { background: #f0fdf4; border: 1.5px dashed #22c55e; padding: 15px; border-radius: 16px; margin-bottom: 15px; text-align: center; }
+.redeem-box { background: #f0fdf4; border: 1.5px dashed #22c55e; padding: 15px; border-radius: 16px; margin-bottom: 15px; }
 
 /* ==========================================
-   8. BOTTOM NAVIGATION & FLOATING CART
+   8. BOTTOM NAVIGATION & CART
    ========================================== */
 .app-bottom-nav {
     position: fixed; bottom: 0; left: 50%;
@@ -367,7 +384,7 @@ body {
    ========================================== */
 .primary-btn {
     background: var(--primary); color: white; border: none;
-    padding: 16px; border-radius: 18px; width: 100%;
+    padding: 16px; border-radius: 16px; width: 100%;
     font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.3s;
 }
 .primary-btn:disabled { background: #cbd5e1; }
@@ -378,7 +395,10 @@ body {
 .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* Support UI */
+/* History & Socials */
+.history-scroll { max-height: 450px; overflow-y: auto; text-align: left; }
+.history-item { padding: 18px; border-bottom: 1px solid #f1f5f9; }
+
 .footer-info { padding: 40px 20px; background: white; border-top: 1px solid #f1f5f9; text-align: center; }
-.btn-wa { color: #22c55e; text-decoration: none; font-weight: 700; border: 1.5px solid #22c55e; padding: 10px 20px; border-radius: 14px; display: inline-block; margin-right: 10px; }
-.btn-ticket { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; }
+.btn-wa { color: #22c55e; text-decoration: none; font-weight: 700; border: 1.5px solid #22c55e; padding: 10px 20px; border-radius: 14px; display: inline-block; }
+.btn-ticket { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; margin-left: 10px; }
