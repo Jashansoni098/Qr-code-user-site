@@ -139,7 +139,7 @@
         </div>
     </div>
 
-   <!-- 2. CART MODAL (Basket Structure Fix) -->
+ <!-- 2. CART MODAL -->
 <div id="cartModal" class="modal-overlay" style="display:none;">
     <div class="modal-content full-sheet">
         <div class="modal-header">
@@ -147,45 +147,66 @@
             <span class="close-x" onclick="window.closeModal('cartModal')">&times;</span>
         </div>
         
-        <!-- Basket List (Quantity +/- yahan professional dikhenge) -->
+        <!-- Basket List -->
         <div id="cart-items-list" class="cart-scroll"></div>
         
-        <!-- FEATURE: APPLY COUPON -->
+        <!-- Professional Coupon Section -->
         <div class="basket-coupon-area">
             <div class="basket-coupon-box">
                 <input type="text" id="coupon-code" placeholder="Enter Coupon Code">
                 <button onclick="window.applyCoupon()">APPLY</button>
             </div>
-            <p id="coupon-msg" style="text-align:left; font-size:0.7rem; margin-top:5px; font-weight:700;"></p>
+            <p id="coupon-msg" class="coupon-status-msg"></p>
         </div>
 
         <div class="summary-card">
             <div class="sum-line"><span>Subtotal</span><b id="summary-subtotal">₹0</b></div>
             <div id="discount-line" class="sum-line" style="display:none; color:green;">
-                <span>Loyalty Reward</span><b>-₹10</b>
+                <span>Redeem Reward</span><b>-₹10</b>
             </div>
             <div id="coupon-discount-line" class="sum-line" style="display:none; color:green;">
                 <span>Coupon Discount</span><b id="coupon-discount-val">-₹0</b>
             </div>
             <hr>
-            <div class="sum-line total"><span>Grand Total</span><b id="summary-total">₹0</b></div>
+            <div class="sum-line total"><span>Total Payable</span><b id="summary-total">₹0</b></div>
         </div>
         <button class="primary-btn" onclick="window.openCheckoutModal()">Proceed to Order</button>
     </div>
 </div>
 
-<!-- 3. CHECKOUT MODAL (Chef Instruction ID Fix) -->
+<!-- 3. CHECKOUT MODAL (Pickup, Delivery, Name, Note) -->
 <div id="checkoutModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
-        <h3>Final Details</h3>
-        <!-- ... Order type selection as is ... -->
-        <input type="text" id="cust-name-final" placeholder="Confirm Your Name" class="pro-input">
+        <div class="modal-header"><h3>Order Details</h3><span class="close-x" onclick="window.closeModal('checkoutModal')">&times;</span></div>
         
-        <!-- FIX: Chef Instruction Textarea -->
-        <textarea id="chef-note" class="pro-input" placeholder="Instruction for Chef (e.g. No Onions)"></textarea>
+        <p class="section-label">Order Type</p>
+        <div class="type-selection">
+            <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">Pickup</button>
+            <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">Delivery</button>
+        </div>
+
+        <div id="delivery-address-box" style="display:none; margin:10px 0;">
+            <div class="info-alert">Min order ₹300 for Delivery (3KM)</div>
+            <input type="text" id="cust-address" placeholder="Flat No / Street / Landmark" class="pro-input">
+        </div>
+
+        <p class="section-label">Guest Details</p>
+        <input type="text" id="cust-name-final" placeholder="Enter Your Name" class="pro-input">
         
-        <button id="final-confirm-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
-        <button class="btn-cancel" onclick="window.closeModal('checkoutModal')">Cancel</button>
+        <p class="section-label">Payment Mode</p>
+        <div class="pay-modes">
+            <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-choice">💳 Online</button>
+            <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-choice">💵 Cash</button>
+        </div>
+
+        <div id="payment-qr-area" style="display:none; text-align:center;">
+            <div id="checkout-payment-qr" style="display:flex; justify-content:center; padding:10px;"></div>
+            <p id="final-upi-id" style="font-size:0.8rem; font-weight:800; color:var(--primary);"></p>
+        </div>
+
+        <textarea id="chef-note" class="pro-input" placeholder="Instruction (Optional, e.g. Less Spicy)"></textarea>
+        
+        <button id="final-place-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
     </div>
 </div>
 

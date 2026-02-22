@@ -189,36 +189,56 @@ function updateCartUI() {
 
 window.renderCartList = () => {
     const list = document.getElementById('cart-items-list');
-    if (!list) return;
-    list.innerHTML = cart.length === 0 ? "<p style='padding:20px;'>Basket is empty</p>" : "";
+    if(!list) return;
+    list.innerHTML = cart.length === 0 ? "<p style='padding:20px; color:gray;'>Your basket is empty</p>" : "";
     let sub = 0;
+    
     cart.forEach((item, index) => {
-        const itemTotal = item.price * (item.qty || 1);
+        const itemTotal = item.price * item.qty;
         sub += itemTotal;
         list.innerHTML += `
         <div class="cart-item">
-            <div class="item-info-box"><b>${item.name}</b><small>₹${item.price}</small></div>
-            <div class="qty-wrapper">
-                <button class="qty-btn-basket" onclick="window.changeQty(${index}, -1)">-</button>
-                <span class="qty-number">${item.qty}</span>
-                <button class="qty-btn-basket" onclick="window.changeQty(${index}, 1)">+</button>
+            <div class="item-main-info"><b>${item.name}</b><small>₹${item.price}</small></div>
+            <div class="qty-control-box">
+                <button class="qty-btn-pro" onclick="window.changeQty(${index}, -1)">-</button>
+                <span class="qty-count-text">${item.qty}</span>
+                <button class="qty-btn-pro" onclick="window.changeQty(${index}, 1)">+</button>
             </div>
-            <div class="item-total-price">₹${itemTotal}</div>
+            <div style="font-weight:800; min-width:60px; text-align:right;">₹${itemTotal}</div>
         </div>`;
     });
 
     setUI('summary-subtotal', "₹" + sub);
     setUI('available-pts', userPoints);
-    showEl('redeem-section', (userPoints >= 1000 && cart.length > 0));
-
-    let finalTotal = sub;
-    if (isRedeeming) finalTotal -= 10;
-    finalTotal -= couponDiscount;
-
-    setUI('summary-total', "₹" + (finalTotal < 0 ? 0 : finalTotal));
-    showFlex('discount-line', isRedeeming);
-    showFlex('coupon-discount-line', couponDiscount > 0);
+    
+    let total = sub - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('summary-total', "₹" + (total < 0 ? 0 : total));
+    
+    const coupLine = document.getElementById('coupon-discount-line');
+    if(coupLine) coupLine.style.display = couponDiscount > 0 ? "flex" : "none";
     setUI('coupon-discount-val', "-₹" + couponDiscount);
+};
+
+window.setPayMode = (mode) => {
+    selectedPaymentMode = mode;
+    document.getElementById('mode-online').classList.toggle('selected', mode === 'Online');
+    document.getElementById('mode-cash').classList.toggle('selected', mode === 'Cash');
+    
+    const qrArea = document.getElementById('payment-qr-area');
+    if(mode === 'Online') {
+        if(qrArea) qrArea.style.display = "block";
+        const qrDiv = document.getElementById('checkout-payment-qr'); 
+        if(qrDiv) {
+            qrDiv.innerHTML = "";
+            const amt = document.getElementById('final-amt').innerText;
+            new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
+            setUI('final-upi-id', "UPI: " + restaurantData.upiId);
+        }
+    } else {
+        if(qrArea) qrArea.style.display = "none";
+    }
+    const finalBtn = document.getElementById('final-place-btn');
+    if(finalBtn) finalBtn.disabled = false;
 };
 
 window.changeQty = (index, delta) => {
