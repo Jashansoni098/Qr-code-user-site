@@ -259,13 +259,71 @@ window.applyCoupon = async () => {
 // ==========================================
 // 5. CHECKOUT & ORDERING
 // ==========================================
+// FIX: PROCEED TO CHECKOUT FUNCTION
+// ==========================================
 window.openCheckoutModal = () => {
-    if(cart.length === 0) return alert("Basket empty!");
-    window.closeModal('cartModal');
-    showFlex('checkoutModal');
-    const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    const final = sub - (isRedeeming ? 10 : 0) - couponDiscount;
-    setUI('final-amt', (final < 0 ? 0 : final));
+    // 1. Check karein cart khali toh nahi
+    if (cart.length === 0) {
+        alert("Aapki basket khali hai!");
+        return;
+    }
+
+    console.log("Proceeding to checkout...");
+
+    // 2. Cart Modal ko band karein
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal) {
+        cartModal.style.display = "none";
+    }
+
+    // 3. Checkout Modal ko dhoondhen aur dikhayein
+    const checkoutModal = document.getElementById('checkoutModal');
+    if (checkoutModal) {
+        checkoutModal.style.display = "flex";
+    } else {
+        console.error("Error: HTML mein 'checkoutModal' ID nahi mili!");
+        alert("System Error: Checkout screen load nahi ho rahi.");
+        return;
+    }
+
+    // 4. Final Amount Calculate karein (Subtotal - Loyalty - Coupon)
+    const subtotal = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
+    let finalPayable = subtotal;
+
+    if (isRedeeming) finalPayable -= 10;
+    finalPayable -= couponDiscount;
+
+    if (finalPayable < 0) finalPayable = 0;
+
+    // 5. Final Amount UI mein update karein
+    const finalAmtSpan = document.getElementById('final-amt');
+    if (finalAmtSpan) {
+        finalAmtSpan.innerText = finalPayable;
+    }
+
+    // 6. Order Type (Pickup/Delivery) buttons reset karein
+    const btnP = document.getElementById('type-pickup');
+    const btnD = document.getElementById('type-delivery');
+    const delBox = document.getElementById('delivery-address-box');
+
+    if (btnP) btnP.classList.add('active');
+    if (btnD) btnD.classList.remove('active');
+    if (delBox) delBox.style.display = "none";
+
+    // 7. Payment Modes reset karein
+    const modeOnline = document.getElementById('mode-online');
+    const modeCash = document.getElementById('mode-cash');
+    const qrArea = document.getElementById('payment-qr-area');
+    const placeBtn = document.getElementById('final-place-btn');
+
+    if (modeOnline) modeOnline.classList.remove('selected');
+    if (modeCash) modeCash.classList.remove('selected');
+    if (qrArea) qrArea.style.display = "none";
+    
+    // Place Order button ko tab tak disable rakhen jab tak payment mode select na ho
+    if (placeBtn) placeBtn.disabled = true;
+
+    window.scrollTo(0, 0); // Screen ko top par le jayein
 };
 
 window.setOrderType = (type) => {
