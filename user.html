@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Custom Style -->
+    <!-- Premium Stylesheet -->
     <link rel="stylesheet" href="user-style.css">
     
     <!-- Essential Libraries -->
@@ -25,9 +25,9 @@
     <div id="announcement-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content ann-popup">
             <div class="close-icon-fixed" onclick="window.closeModal('announcement-modal')">&times;</div>
-            <div id="ann-image-container"></div> <!-- Dynamic Image from JS -->
+            <div id="ann-image-container" style="margin-bottom:15px;"></div>
             <h2 id="ann-title">Special Announcement</h2>
-            <p id="ann-desc">Loading special deals...</p>
+            <p id="ann-desc">Loading special deals for you...</p>
             <button class="primary-btn" onclick="window.closeModal('announcement-modal')">View Today's Menu</button>
         </div>
     </div>
@@ -68,12 +68,12 @@
             </div>
         </div>
 
-        <!-- HERO BANNER -->
+        <!-- HERO BANNER (Owner Controlled Image) -->
         <section class="hero-section">
-            <img id="hero-banner-img" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" alt="Special Deal" class="hero-img">
+            <img id="hero-banner-img" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800" alt="Deal" class="hero-img">
         </section>
 
-        <!-- DYNAMIC CATEGORY BAR -->
+        <!-- DYNAMIC CATEGORY BAR (Horizontal Scroll) -->
         <div class="category-nav">
             <div class="category-scroll" id="categories-list">
                 <button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>
@@ -94,10 +94,10 @@
             </div>
         </section>
 
-        <!-- MAIN MENU LIST -->
+        <!-- MAIN MENU LIST (2-Column Grid) -->
         <main id="menu-list" class="food-grid"></main>
 
-        <!-- ABOUT & SUPPORT SECTION -->
+        <!-- ABOUT & SUPPORT -->
         <section class="footer-info">
             <div class="about-card">
                 <h4>About Restaurant</h4>
@@ -108,7 +108,7 @@
                     <i class="fab fa-whatsapp"></i> WhatsApp
                 </a>
                 <button onclick="window.openSupportModal()" class="btn-ticket">
-                    <i class="fas fa-headset"></i> Support Ticket
+                    <i class="fas fa-headset"></i> Raise Ticket
                 </button>
             </div>
         </section>
@@ -117,11 +117,9 @@
     <!-- BOTTOM TAB NAVIGATION -->
     <nav class="app-bottom-nav">
         <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="active"><i class="fas fa-utensils"></i><span>Menu</span></button>
-        <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span id="cart-badge-count">0</span><span>Basket</span></button>
+        <button onclick="window.openCartModal()"><i class="fas fa-shopping-basket"></i><span id="cart-badge-count" class="nav-badge">0</span><span>Basket</span></button>
         <button onclick="window.openTrackingModal()"><i class="fas fa-route"></i><span>Track</span></button>
         <button onclick="window.openHistoryModal()"><i class="fas fa-receipt"></i><span>History</span></button>
-        
-        <!-- Login/Profile Toggle Buttons -->
         <button id="nav-auth-btn" onclick="window.openAuthModal()"><i class="fas fa-user-circle"></i><span>Login</span></button>
         <button id="nav-profile-btn" onclick="window.openProfileModal()" style="display:none;"><i class="fas fa-id-card"></i><span>Profile</span></button>
     </nav>
@@ -136,49 +134,39 @@
 
     <!-- MODALS SECTION -->
 
-   <!-- Is Modal ko replace karein (Customization modal) -->
-<div id="customizeModal" class="modal-overlay" style="display:none;">
-    <div class="modal-content customize-sheet">
-        <div class="modal-header">
-            <h3 id="cust-item-name">Select Pizza Size</h3>
-            <span class="close-x" onclick="window.closeModal('customizeModal')">&times;</span>
-        </div>
-        <div class="customize-body">
-            <p class="section-title">Size Options</p>
-            <div id="size-options-container" class="options-list">
-                <!-- Sizes yahan JS se load honge -->
+    <!-- 1. CUSTOMIZE MODAL (Pizza Size & Extras) -->
+    <div id="customizeModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content customize-sheet">
+            <div class="modal-header">
+                <h3 id="cust-item-name">Customize</h3>
+                <span class="close-x" onclick="window.closeModal('customizeModal')">&times;</span>
             </div>
-            
-            <p class="section-title" style="margin-top:20px;">Extra Variants</p>
-            <div id="extras-options" class="options-list">
-                <!-- Extras yahan load honge -->
+            <div class="customize-body">
+                <p class="section-title">Select Size</p>
+                <div id="size-options-container" class="options-list">
+                    <!-- Sizes injected by JS (p-size radio group) -->
+                </div>
+                <p class="section-title" style="margin-top:20px;">Extra Variants</p>
+                <div id="extras-options" class="options-list">
+                    <!-- Extras injected by JS -->
+                </div>
             </div>
+            <button class="primary-btn" onclick="window.addCustomizedToCart()">Add to Basket</button>
         </div>
-        <button class="primary-btn" onclick="window.addCustomizedToCart()">Add to Basket</button>
     </div>
-</div>
-
-<!-- Is section ko Checkout Modal mein check karein -->
-<div id="delivery-address-box" style="display:none; margin:10px 0;">
-    <div id="delivery-dynamic-msg" class="info-alert"></div>
-    <input type="text" id="cust-address" placeholder="Flat No / Street / City" class="pro-input">
-</div>
 
     <!-- 2. CART MODAL (Basket + Coupon + Loyalty) -->
     <div id="cartModal" class="modal-overlay" style="display:none;">
         <div class="modal-content full-sheet">
             <div class="modal-header"><h3>My Basket</h3><span class="close-x" onclick="window.closeModal('cartModal')">&times;</span></div>
             
-            <!-- Items with Quantity controls (+/-) -->
             <div id="cart-items-list" class="cart-scroll"></div>
             
-            <!-- LOYALTY REDEEM SECTION -->
             <div id="redeem-section" class="redeem-box" style="display:none;">
                 <p>🎁 You have <b id="available-pts">0</b> points. Redeem 1000 pts for ₹10 off?</p>
                 <button onclick="window.applyRedeem()" id="apply-redeem-btn">Apply Reward</button>
             </div>
 
-            <!-- PROFESSIONAL COUPON SECTION -->
             <div class="basket-coupon-area">
                 <div class="basket-coupon-box">
                     <input type="text" id="coupon-code" placeholder="Enter Coupon Code">
@@ -198,19 +186,23 @@
         </div>
     </div>
 
-    <!-- 3. CHECKOUT MODAL (Pickup vs Delivery Switch) -->
-   <div class="type-selection">
-    <!-- IDs: type-pickup aur type-delivery -->
-    <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">Pickup</button>
-    <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">Delivery</button>
-</div>
+    <!-- 3. CHECKOUT MODAL (Pickup vs Delivery / Online vs Cash) -->
+    <div id="checkoutModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content checkout-sheet">
+            <div class="modal-header"><h3>Final Step</h3><span class="close-x" onclick="window.closeModal('checkoutModal')">&times;</span></div>
+            
+            <div class="type-toggle">
+                <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">Pickup</button>
+                <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">Delivery</button>
+            </div>
+            
+            <div id="delivery-address-box" style="display:none; margin:10px 0;">
+                <div id="delivery-dynamic-msg" class="info-alert">Min order logic will show here</div>
+                <input type="text" id="cust-address" placeholder="Flat No / Street / Landmark" class="pro-input">
+            </div>
 
-<!-- ID: delivery-address-box -->
-<div id="delivery-address-box" style="display:none; margin:15px 0;">
-    <p id="delivery-dynamic-msg" style="color:#d97706; font-size:0.75rem; font-weight:700; margin-bottom:5px;"></p>
-    <input type="text" id="cust-address" placeholder="Enter Full Address" class="pro-input">
-</div>
-
+            <input type="text" id="cust-name-final" placeholder="Confirm Your Name" class="pro-input">
+            
             <div class="pay-modes">
                 <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-choice">💳 Online</button>
                 <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-choice">💵 Cash</button>
@@ -221,8 +213,7 @@
                 <p id="final-upi-id" style="font-size:0.8rem; font-weight:800; color:var(--primary); margin-top:5px;"></p>
             </div>
 
-            <!-- FIX: Chef Instruction (ID: chef-note) -->
-            <textarea id="chef-note" class="pro-input" placeholder="Note to Chef (Optional, e.g. Less Spicy)"></textarea>
+            <textarea id="chef-note" class="pro-input" placeholder="Instruction for Chef (e.g. Less Spicy)"></textarea>
             
             <button id="final-place-btn" class="primary-btn" onclick="window.confirmOrder()" disabled>Place Order ₹<span id="final-amt">0</span></button>
         </div>
@@ -244,19 +235,21 @@
         </div>
     </div>
 
-    <!-- 6. PROFILE MODAL -->
+    <!-- 6. PROFILE & AUTH MODALS -->
     <div id="profileModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <div class="modal-header"><h3>My Profile</h3><span class="close-x" onclick="window.closeModal('profileModal')">&times;</span></div>
-            <div class="profile-pts-card" style="margin-bottom:15px;"><small>Points Balance</small><h2 id="profile-pts-display">0</h2></div>
+            <div class="profile-pts-card" style="margin-bottom:15px;">
+                <small>Loyalty Points</small>
+                <h2 id="profile-pts-display">0</h2>
+            </div>
             <input type="text" id="user-profile-name" placeholder="Full Name" class="pro-input">
             <input type="tel" id="user-profile-phone" placeholder="Mobile Number" class="pro-input">
             <button class="primary-btn" onclick="window.saveUserProfile()">Save Profile</button>
-            <button class="btn-logout-pro" onclick="window.logout()" style="color:red; margin-top:20px; border:none; background:none; font-weight:800; cursor:pointer;">Logout Account</button>
+            <button class="btn-logout-pro" onclick="window.logout()">Logout Account</button>
         </div>
     </div>
 
-    <!-- 7. AUTH MODAL (Login/Signup) -->
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-content auth-box">
             <h2>Welcome</h2>
@@ -266,21 +259,21 @@
             </div>
             <input type="email" id="auth-email" placeholder="Email Address" class="pro-input">
             <input type="password" id="auth-pass" placeholder="Password" class="pro-input">
-            <button class="primary-btn" onclick="window.handleAuth()">Submit</button>
+            <button class="primary-btn" onclick="window.handleAuth()">Proceed</button>
             <button class="btn-text" onclick="window.closeModal('authModal')" style="margin-top:10px;">Close</button>
         </div>
     </div>
 
-    <!-- 8. SUPPORT TICKET MODAL -->
+    <!-- 7. SUPPORT TICKET MODAL -->
     <div id="supportModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
-            <div class="modal-header"><h3>Help & Support</h3><span class="close-x" onclick="window.closeModal('supportModal')">&times;</span></div>
-            <textarea id="support-query" class="pro-input" placeholder="How can we help you?"></textarea>
+            <div class="modal-header"><h3>Support Ticket</h3><span class="close-x" onclick="window.closeModal('supportModal')">&times;</span></div>
+            <textarea id="support-query" class="pro-input" placeholder="How can we help?"></textarea>
             <button class="primary-btn" onclick="window.submitSupportTicket()">Submit Query</button>
         </div>
     </div>
 
-    <!-- SUCCESS SCREEN -->
+    <!-- 8. SUCCESS SCREEN -->
     <div id="success-screen" class="success-screen-overlay" style="display:none;">
         <div class="success-card">
             <div class="success-check">✓</div>
