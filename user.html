@@ -136,31 +136,32 @@
 
     <!-- MODALS SECTION -->
 
-   <!-- Is Modal section ko replace karein -->
+   <!-- Is Modal ko replace karein (Customization modal) -->
 <div id="customizeModal" class="modal-overlay" style="display:none;">
     <div class="modal-content customize-sheet">
         <div class="modal-header">
-            <h3 id="cust-item-name">Select Size</h3>
+            <h3 id="cust-item-name">Select Pizza Size</h3>
             <span class="close-x" onclick="window.closeModal('customizeModal')">&times;</span>
         </div>
         <div class="customize-body">
+            <p class="section-title">Size Options</p>
             <div id="size-options-container" class="options-list">
-                <!-- Size Options yahan JS se dynamic aayenge -->
+                <!-- Sizes yahan JS se load honge -->
             </div>
             
             <p class="section-title" style="margin-top:20px;">Extra Variants</p>
             <div id="extras-options" class="options-list">
-                <!-- Extras yahan aayenge -->
+                <!-- Extras yahan load honge -->
             </div>
         </div>
         <button class="primary-btn" onclick="window.addCustomizedToCart()">Add to Basket</button>
     </div>
 </div>
 
-<!-- Checkout Modal mein Delivery Msg ID check karein -->
+<!-- Is section ko Checkout Modal mein check karein -->
 <div id="delivery-address-box" style="display:none; margin:10px 0;">
     <div id="delivery-dynamic-msg" class="info-alert"></div>
-    <input type="text" id="cust-address" placeholder="Enter Full Address" class="pro-input">
+    <input type="text" id="cust-address" placeholder="Flat No / Street / City" class="pro-input">
 </div>
 
     <!-- 2. CART MODAL (Basket + Coupon + Loyalty) -->
