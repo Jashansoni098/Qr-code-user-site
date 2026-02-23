@@ -199,21 +199,18 @@
     </div>
 
     <!-- 3. CHECKOUT MODAL (Pickup vs Delivery Switch) -->
-    <div id="checkoutModal" class="modal-overlay" style="display:none;">
-        <div class="modal-content checkout-sheet">
-            <div class="modal-header"><h3>Final Step</h3><span class="close-x" onclick="window.closeModal('checkoutModal')">&times;</span></div>
-            <div class="type-toggle">
-                <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">Pickup</button>
-                <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">Delivery</button>
-            </div>
-            
-            <div id="delivery-address-box" style="display:none; margin:10px 0;">
-                <div id="delivery-dynamic-msg" class="info-alert">Min order ₹300 for Delivery (3KM)</div>
-                <input type="text" id="cust-address" placeholder="Flat No / Street / Landmark" class="pro-input">
-            </div>
+   <div class="type-selection">
+    <!-- IDs: type-pickup aur type-delivery -->
+    <button onclick="window.setOrderType('Pickup')" id="type-pickup" class="type-btn active">Pickup</button>
+    <button onclick="window.setOrderType('Delivery')" id="type-delivery" class="type-btn">Delivery</button>
+</div>
 
-            <input type="text" id="cust-name-final" placeholder="Enter Your Name" class="pro-input">
-            
+<!-- ID: delivery-address-box -->
+<div id="delivery-address-box" style="display:none; margin:15px 0;">
+    <p id="delivery-dynamic-msg" style="color:#d97706; font-size:0.75rem; font-weight:700; margin-bottom:5px;"></p>
+    <input type="text" id="cust-address" placeholder="Enter Full Address" class="pro-input">
+</div>
+
             <div class="pay-modes">
                 <button onclick="window.setPayMode('Online')" id="mode-online" class="pay-choice">💳 Online</button>
                 <button onclick="window.setPayMode('Cash')" id="mode-cash" class="pay-choice">💵 Cash</button>

@@ -269,15 +269,40 @@ window.openCheckoutModal = () => {
 };
 
 window.setOrderType = (type) => {
+    console.log("Selected Order Type:", type);
     orderType = type;
-    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    const minDlv = restaurantData.minOrder || 300;
-    document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
-    document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
+
+    // 1. Buttons ko dhoondhen
+    const btnP = document.getElementById('type-pickup');
+    const btnD = document.getElementById('type-delivery');
+    const delBox = document.getElementById('delivery-address-box');
+    const delMsg = document.getElementById('delivery-dynamic-msg');
+
+    // 2. Active Class Toggle karein
+    if(btnP) btnP.classList.toggle('active', type === 'Pickup');
+    if(btnD) btnD.classList.toggle('active', type === 'Delivery');
+
     if(type === 'Delivery') {
-        if(subtotal < minDlv) { alert(`Min ₹${minDlv} for delivery!`); window.setOrderType('Pickup'); return; }
-        showEl('delivery-address-box');
-    } else showEl('delivery-address-box', false);
+        // 3. Subtotal calculate karein
+        const subtotal = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
+        
+        // 4. Owner ki settings check karein (Agar settings nahi mili toh 0 aur 3KM default)
+        const minOrder = parseInt(restaurantData.minOrder) || 0;
+        const km = restaurantData.maxKM || 3;
+
+        if(subtotal < minOrder) {
+            alert(`Oops! Delivery ke liye kam se kam ₹${minOrder} ka order hona zaroori hai.\nAbhi aapka total ₹${subtotal} hai.`);
+            window.setOrderType('Pickup'); // Wapas pickup par bhejein
+            return;
+        }
+
+        // 5. Address Box dikhayein
+        if(delBox) delBox.style.display = "block";
+        if(delMsg) delMsg.innerText = `✅ Delivery area: ${km}KM ke andar | Min Order: ₹${minOrder}`;
+    } else {
+        // Pickup select kiya toh address box chhupayein
+        if(delBox) delBox.style.display = "none";
+    }
 };
 
 window.setPayMode = (mode) => {
