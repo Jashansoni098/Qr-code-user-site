@@ -1,18 +1,17 @@
 /* ==========================================
-   1. GLOBAL & THEME SETUP
+   1. CORE VARIABLES & RESET
    ========================================== */
 :root {
     --primary: #e11d48; /* Premium Crimson Red */
+    --primary-light: #fff1f2;
     --dark: #0f172a;
     --text-main: #1e293b;
     --text-muted: #64748b;
     --white: #ffffff;
-    --bg-page: #f1f5f9;
-    --bg-card: #ffffff;
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 28px;
+    --bg: #f1f5f9; 
+    --veg: #22c55e;
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    --radius: 20px;
 }
 
 * {
@@ -20,26 +19,29 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
 
 body {
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background: var(--bg-page);
+    background: var(--bg);
     color: var(--text-main);
     line-height: 1.5;
 }
 
+/* App Wrapper: Centered mobile view */
 .app-wrapper {
     max-width: 500px;
     margin: 0 auto;
     background: var(--white);
     min-height: 100vh;
-    padding-bottom: 110px;
+    padding-bottom: 120px; /* Cart bar ke liye space */
     position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,0.1);
 }
 
 /* ==========================================
-   2. HEADER & BRANDING (FIXED)
+   2. HEADER & BRANDING (60px LOGO FIXED)
    ========================================== */
 .main-header {
     padding: 20px;
@@ -47,48 +49,84 @@ body {
     border-bottom: 1px solid #f1f5f9;
 }
 
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
 .res-logo-img {
     width: 60px !important;
     height: 60px !important;
-    border-radius: 15px;
+    border-radius: 14px;
     object-fit: cover;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border: 1.5px solid #f1f5f9;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 .res-meta h1 {
-    font-size: 1.3rem;
+    margin: 0;
+    font-size: 1.25rem;
     font-weight: 800;
-    margin-bottom: 5px;
 }
 
-.social-row a {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-    margin-right: 12px;
-}
-
-.info-badges {
+.social-row {
     display: flex;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 12px;
+    margin-top: 8px;
 }
 
-.badge, .wifi-badge {
-    padding: 6px 12px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 700;
-}
+.social-row a { color: var(--text-muted); font-size: 1rem; transition: 0.3s; }
+.social-row a:hover { color: var(--primary); }
+
+.info-badges { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+.badge { padding: 6px 12px; background: #f1f5f9; border-radius: 10px; font-size: 0.7rem; font-weight: 700; color: #475569; }
+.wifi-badge { background: #eff6ff; color: #3b82f6; padding: 6px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
 
 /* ==========================================
-   3. MODAL OVERLAY (BACKGROUND VISIBILITY FIX)
+   3. CATEGORY SCROLL (SWIGGY STYLE)
+   ========================================== */
+.category-nav {
+    padding: 10px 0 15px 20px;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.category-scroll {
+    display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-right: 20px;
+}
+.category-scroll::-webkit-scrollbar { display: none; }
+
+.cat-pill {
+    padding: 10px 20px; border-radius: 30px; border: 1.5px solid #e2e8f0;
+    background: white; white-space: nowrap; font-weight: 700; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+}
+.cat-pill.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2); }
+
+.hero-section { padding: 0 20px 20px; }
+.hero-img { width: 100%; border-radius: 20px; height: 140px; object-fit: cover; }
+
+/* ==========================================
+   4. FOOD GRID (2-COLUMNS)
+   ========================================== */
+.food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px 20px; }
+.food-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #f1f5f9; cursor: pointer; transition: transform 0.2s; }
+.food-card:active { transform: scale(0.96); }
+.food-img { width: 100%; height: 115px; object-fit: cover; }
+.food-info { padding: 12px; text-align: left; }
+.food-info h4 { margin: 0; font-size: 0.85rem; font-weight: 800; height: 38px; overflow: hidden; color: var(--dark); line-height: 1.2; }
+.food-price { color: var(--primary); font-weight: 800; font-size: 1rem; margin-top: 8px; display: block; }
+
+/* ==========================================
+   5. MODALS (TRANSPARENT BACKGROUND & BLUR)
    ========================================== */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.4); /* Transparent dark background */
-    backdrop-filter: blur(8px); /* Professional blur */
+    background: rgba(15, 23, 42, 0.5); /* FIX: Transparent dark overlay */
+    backdrop-filter: blur(10px); /* FIX: Professional blur effect */
     z-index: 5000;
     display: none;
     justify-content: center;
@@ -100,11 +138,12 @@ body {
     width: 92%;
     max-width: 420px;
     padding: 25px;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-radius: 28px;
     max-height: 85vh;
     overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
 }
 
 @keyframes modalPop {
@@ -112,10 +151,12 @@ body {
     to { opacity: 1; transform: scale(1); }
 }
 
+.close-x { position: absolute; right: 20px; top: 20px; font-size: 1.8rem; color: var(--gray); cursor: pointer; }
+
 /* ==========================================
-   4. PROFESSIONAL BASKET (QUANTITY +/- UI)
+   6. BASKET & QUANTITY (+/- UI FIXED)
    ========================================== */
-.cart-scroll { margin-bottom: 15px; }
+.cart-scroll { max-height: 350px; overflow-y: auto; }
 
 .cart-item {
     display: flex;
@@ -123,16 +164,14 @@ body {
     align-items: center;
     padding: 15px;
     background: #f8fafc;
-    border-radius: var(--radius-md);
-    margin-bottom: 12px;
+    border-radius: 16px;
+    margin-bottom: 10px;
     border: 1px solid #f1f5f9;
 }
 
 .item-main-info { flex: 2; text-align: left; }
-.item-main-info b { font-size: 0.9rem; color: var(--dark); display: block; }
-.item-main-info small { color: var(--text-muted); font-size: 0.75rem; }
+.item-main-info b { font-size: 0.85rem; display: block; }
 
-/* Quantity Buttons - Premium Pill Style */
 .qty-control-box {
     flex: 1;
     display: flex;
@@ -141,153 +180,91 @@ body {
     gap: 12px;
     background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 4px 8px;
-    max-width: 95px;
+    border-radius: 10px;
+    padding: 5px 8px;
+    max-width: 90px;
 }
 
 .qty-btn-pro {
-    border: none; background: none;
-    color: var(--primary); font-weight: 900;
-    font-size: 1.3rem; cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.2rem;
+    cursor: pointer;
 }
 
-.qty-count-text { font-weight: 800; font-size: 1rem; color: var(--dark); }
+.qty-count-text { font-weight: 800; font-size: 0.9rem; min-width: 15px; text-align: center; }
 
 /* Coupon Area */
-.basket-coupon-area {
-    margin: 15px 0;
-    background: #f1f5f9;
-    padding: 8px;
-    border-radius: 16px;
-}
-
-.basket-coupon-box { display: flex; gap: 8px; }
-
-.basket-coupon-box input {
-    flex: 1; border: none; background: transparent;
-    padding: 10px; font-weight: 800; font-size: 0.85rem;
-    text-transform: uppercase; outline: none;
-}
-
-.basket-coupon-box button {
-    background: var(--dark); color: white; border: none;
-    padding: 0 20px; border-radius: 10px; font-weight: 800; font-size: 0.75rem;
-}
+.basket-coupon-area { margin: 15px 0; }
+.basket-coupon-box { display: flex; background: #f1f5f9; padding: 6px; border-radius: 12px; }
+.basket-coupon-box input { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; }
+.basket-coupon-box button { background: var(--dark); color: white; border: none; padding: 0 15px; border-radius: 10px; font-weight: 800; font-size: 0.75rem; }
 
 /* ==========================================
-   5. ORDER DETAILS (CHECKOUT UI FIX)
+   7. CHECKOUT & LOYALTY
    ========================================== */
-.section-label {
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-    margin-top: 20px;
-}
+.type-selection { display: flex; gap: 10px; margin-bottom: 20px; }
+.type-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #eee; background: white; font-weight: 800; cursor: pointer; }
+.type-btn.active { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
 
-/* Pickup/Delivery Toggle */
-.type-selection {
-    display: flex;
-    gap: 12px;
-    background: #f1f5f9;
-    padding: 6px;
-    border-radius: 18px;
-    margin-bottom: 15px;
-}
+.pay-modes { display: flex; gap: 10px; margin: 15px 0; }
+.pay-choice { flex: 1; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; background: white; font-weight: 800; cursor: pointer; }
+.pay-choice.selected { border-color: var(--primary); background: #fff1f2; color: var(--primary); }
 
-.type-btn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px;
-    border-radius: 14px;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font-weight: 800;
-    cursor: pointer;
-    transition: 0.3s;
-}
+.summary-card { padding: 15px; background: #f8fafc; border-radius: 20px; margin-top: 15px; }
+.sum-line { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+.total { font-weight: 800; font-size: 1rem; color: var(--dark); margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd; }
 
-.type-btn i { font-size: 1.2rem; margin-bottom: 4px; }
-.type-btn.active {
-    background: white;
-    color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-/* Payment Mode Buttons */
-.pay-modes { display: flex; gap: 10px; margin-bottom: 20px; }
-
-.pay-choice {
-    flex: 1;
-    padding: 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 16px;
-    background: white;
-    font-weight: 800;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.pay-choice.selected {
-    border-color: var(--primary);
-    background: #fff1f2;
-    color: var(--primary);
-}
-
-.pro-input {
-    width: 100%;
-    padding: 16px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 16px;
-    font-family: inherit;
-    font-size: 1rem;
-    margin-bottom: 15px;
-    outline: none;
-}
-
-.pro-input:focus { border-color: var(--primary); }
+.redeem-box { background: #f0fdf4; border: 1px dashed #22c55e; padding: 15px; border-radius: 16px; margin-bottom: 15px; text-align: center; }
 
 /* ==========================================
-   6. APP BUTTONS & UTILS
+   8. BOTTOM NAV & FLOATING CART
    ========================================== */
-.primary-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 18px;
-    border-radius: 18px;
-    width: 100%;
-    font-weight: 800;
-    font-size: 1.05rem;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(225, 29, 72, 0.2);
-}
-
-.primary-btn:disabled { background: #cbd5e1; box-shadow: none; }
-
 .app-bottom-nav {
     position: fixed; bottom: 0; left: 50%;
     transform: translateX(-50%); width: 100%;
-    max-width: 500px; background: white;
+    max-width: 500px; background: var(--white);
     display: flex; justify-content: space-around;
     padding: 12px 0 30px; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 2000;
 }
-
 .app-bottom-nav button {
-    background: none; border: none; color: var(--text-muted);
-    font-size: 0.7rem; font-weight: 800;
-    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    background: none; border: none; color: #94a3b8;
+    display: flex; flex-direction: column; align-items: center;
+    font-size: 0.7rem; font-weight: 800; gap: 4px; cursor: pointer;
 }
-
 .app-bottom-nav button.active { color: var(--primary); }
 
-.summary-card { padding: 15px; background: #f8fafc; border-radius: 20px; margin-top: 10px; }
-.sum-line { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
-.total { border-top: 1px dashed #cbd5e1; padding-top: 10px; margin-top: 10px; font-weight: 800; font-size: 1.1rem; }
+.cart-floating-bar {
+    position: fixed; bottom: 85px; left: 50%;
+    transform: translateX(-50%); width: 92%;
+    max-width: 460px; background: var(--dark);
+    color: white; padding: 16px 20px; border-radius: 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 4000; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* ==========================================
+   9. SUCCESS & UTILS
+   ========================================== */
+.success-screen-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: white; z-index: 6000; display: flex;
+    justify-content: center; align-items: center; text-align: center;
+}
+.success-check { width: 90px; height: 90px; background: #dcfce7; color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto 20px; }
+
+.primary-btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 16px; width: 100%; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+.primary-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+.pro-input { width: 100%; padding: 16px; border: 1.5px solid #e2e8f0; border-radius: 18px; margin-bottom: 12px; font-family: inherit; font-size: 1rem; }
+
+/* Loader */
+.loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+.spinner { width: 35px; height: 35px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Support */
+.btn-wa { color: #22c55e; text-decoration: none; font-weight: 700; border: 1.5px solid #22c55e; padding: 10px 20px; border-radius: 14px; display: inline-block; }
+.btn-ticket { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; margin-left: 10px; }
