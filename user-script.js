@@ -114,44 +114,82 @@ function renderCategories() {
 // ==========================================
 // 3. MENU & CUSTOMIZATION
 // ==========================================
+// ==========================================
+// 1. MENU RENDERING (Grid View with S/M/L Price Info)
+// ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
         const grid = document.getElementById('menu-list');
-        if(!grid) return;
+        if (!grid) return;
         grid.innerHTML = "";
+
+        // Search Input check
         const searchInput = document.getElementById('menu-search');
         const search = searchInput ? searchInput.value.toLowerCase() : "";
 
         snap.forEach(d => {
             const item = d.data();
-            if(category !== 'All' && item.category !== category) return;
-            if(search && !item.name.toLowerCase().includes(search)) return;
+            // Filter by Category and Search
+            if (category !== 'All' && item.category !== category) return;
+            if (search && !item.name.toLowerCase().includes(search)) return;
+
+            // Price Display Logic: Agar M aur L price hain toh range dikhao
+            let priceHTML = `₹${item.price}`;
+            if (item.priceM && item.priceM > 0) priceHTML += ` <small style='color:gray'> / M-₹${item.priceM}</small>`;
+            if (item.priceL && item.priceL > 0) priceHTML += ` <small style='color:gray'> / L-₹${item.priceL}</small>`;
 
             grid.innerHTML += `
                 <div class="food-card" onclick='window.openCustomize("${d.id}", ${JSON.stringify(item)})'>
                     <img src="${item.imgUrl || 'https://via.placeholder.com/150'}" class="food-img">
                     <div class="food-info">
                         <h4>${item.name}</h4>
-                        <b class="food-price">₹${item.price}</b>
+                        <b class="food-price">${priceHTML}</b>
+                        <button class="add-btn" style="width:100%; margin-top:8px;">ADD +</button>
                     </div>
                 </div>`;
         });
-        showEl('loader', false);
+        
+        const loaderEl = document.getElementById('loader');
+        if (loaderEl) loaderEl.style.display = "none";
     });
 }
 
+// ==========================================
+// 2. OPEN CUSTOMIZE MODAL (S/M/L Logic)
+// ==========================================
 window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
-    document.getElementById('cust-item-name').innerText = item.name;
     
+    // UI Update: Name & Prices
+    const nameEl = document.getElementById('cust-item-name');
+    if(nameEl) nameEl.innerText = item.name;
+    
+    // Size Prices Set (S/M/L)
     setUI('p-price-s', "₹" + item.price);
-    setUI('p-price-m', item.priceM ? "₹" + item.priceM : "₹" + (parseInt(item.price) + 50));
-    setUI('p-price-l', item.priceL ? "₹" + item.priceL : "₹" + (parseInt(item.price) + 100));
+    
+    // Medium Size Check
+    const medRow = document.querySelector('input[value="Medium"]').parentElement;
+    if (item.priceM && item.priceM > 0) {
+        setUI('p-price-m', "₹" + item.priceM);
+        medRow.style.display = "flex";
+    } else {
+        medRow.style.display = "none";
+    }
 
+    // Large Size Check
+    const lrgRow = document.querySelector('input[value="Large"]').parentElement;
+    if (item.priceL && item.priceL > 0) {
+        setUI('p-price-l', "₹" + item.priceL);
+        lrgRow.style.display = "flex";
+    } else {
+        lrgRow.style.display = "none";
+    }
+
+    // Load Extras (Toppings) from Owner's Variants
     const extrasDiv = document.getElementById('extras-options');
-    if(extrasDiv) {
+    if (extrasDiv) {
         extrasDiv.innerHTML = "";
-        if(restaurantData.variants) {
+        if (restaurantData.variants && restaurantData.variants.length > 0) {
             restaurantData.variants.forEach(v => {
                 extrasDiv.innerHTML += `
                 <label class="option-row">
@@ -159,28 +197,55 @@ window.openCustomize = (id, item) => {
                     <b>+₹${v.price}</b>
                 </label>`;
             });
+        } else {
+            extrasDiv.innerHTML = "<p style='font-size:0.7rem; color:gray;'>No extras available</p>";
         }
     }
+    
     showFlex('customizeModal');
 };
 
+// ==========================================
+// 3. ADD CUSTOMIZED ITEM TO CART (Final Calculation)
+// ==========================================
 window.addCustomizedToCart = () => {
+    // 1. Get Selected Size
     const sizeInput = document.querySelector('input[name="p-size"]:checked');
     const size = sizeInput ? sizeInput.value : "Regular";
     
-    let price = parseInt(currentItemToCustomize.price);
-    if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM) || (price + 50);
-    if(size === 'Large') price = parseInt(currentItemToCustomize.priceL) || (price + 100);
+    // 2. Base Price based on Size
+    let finalPrice = parseInt(currentItemToCustomize.price); // Default Regular
+    if (size === 'Medium' && currentItemToCustomize.priceM) finalPrice = parseInt(currentItemToCustomize.priceM);
+    if (size === 'Large' && currentItemToCustomize.priceL) finalPrice = parseInt(currentItemToCustomize.priceL);
     
-    let extrasSelected = [];
+    // 3. Add Extras Price
+    let selectedExtras = [];
     document.querySelectorAll('.ex-item:checked').forEach(el => {
-        price += parseInt(el.dataset.price);
-        extrasSelected.push(el.value);
+        const extraPrice = parseInt(el.dataset.price) || 0;
+        finalPrice += extraPrice;
+        selectedExtras.push(el.value);
     });
 
-    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, extras: extrasSelected, qty: 1 });
-    saveCart();
+    // 4. Push to Cart Array
+    const cartItem = {
+        id: Date.now(),
+        name: `${currentItemToCustomize.name} (${size})`,
+        baseName: currentItemToCustomize.name,
+        size: size,
+        price: finalPrice,
+        extras: selectedExtras,
+        qty: 1
+    };
+
+    cart.push(cartItem);
+    
+    // 5. Save and Update UI
+    saveCart(); 
     window.closeModal('customizeModal');
+    
+    // Haptic Feedback for Mobile
+    if (window.navigator.vibrate) window.navigator.vibrate(50);
+    alert(`${currentItemToCustomize.name} added to basket!`);
 };
 
 // ==========================================
