@@ -307,31 +307,79 @@ window.setPayMode = (mode) => {
 // ==========================================
 // 6. CONFIRM ORDER
 // ==========================================
+// ==========================================
+// 6. CONFIRM ORDER & SUCCESS SCREEN FIX
+// ==========================================
 window.confirmOrder = async () => {
-    const nameEl = document.getElementById('cust-name-final');
-    if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
-    
-    showEl('loader');
-    const finalBill = document.getElementById('final-amt').innerText;
-    
-    const orderData = {
-        resId, table: tableNo, customerName: nameEl.value, userUID, items: cart,
-        total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
-        orderType, timestamp: new Date(), 
-        instruction: document.getElementById('chef-note').value || "", 
-        address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : "At Table"
-    };
+    const nameInput = document.getElementById('cust-name-final');
+    const finalAmtEl = document.getElementById('final-amt');
+    const checkoutModal = document.getElementById('checkoutModal');
+    const successScreen = document.getElementById('success-screen');
 
+    // Validation
+    const name = nameInput ? nameInput.value.trim() : "";
+    if(!name) return alert("Kripya apna naam bhariye!");
+    
+    // Start Loader
+    if(loader) loader.style.display = "flex";
+    
     try {
+        const finalBill = finalAmtEl ? finalAmtEl.innerText : "0";
+        
+        const orderData = {
+            resId, 
+            table: tableNo, 
+            customerName: name, 
+            userUID, 
+            items: cart,
+            total: finalBill, 
+            status: "Pending", 
+            paymentMode: selectedPaymentMode,
+            orderType: orderType,
+            timestamp: new Date(), 
+            instruction: document.getElementById('chef-note') ? document.getElementById('chef-note').value : "",
+            address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : "At Table"
+        };
+
+        // 1. Firebase mein Order bhejein
         await addDoc(collection(db, "orders"), orderData);
-        showEl('success-screen'); setUI('s-name', nameEl.value); setUI('s-table', tableNo);
-        // Points Update
-        const earned = Math.floor(parseInt(finalBill)/10);
-        let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
-        await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
-        localStorage.removeItem(`platto_cart_${resId}`); cart = []; updateCartUI();
-    } catch(e) { alert(e.message); }
-    showEl('loader', false);
+        
+        // 2. Checkout Modal ko ZABARDASTI band karein
+        if(checkoutModal) checkoutModal.style.display = "none";
+
+        // 3. Success Screen (Thank You) dikhayein
+        if(successScreen) {
+            successScreen.style.display = "flex";
+            setUI('s-name', name);
+            setUI('s-table', tableNo);
+        }
+
+        // 4. Loyalty Points Update logic
+        const earned = Math.floor(parseInt(finalBill) / 100) * 10;
+        const userRef = doc(db, "users", userUID);
+        const snap = await getDoc(userRef);
+        let pts = snap.exists() ? snap.data().points : 0;
+        if(isRedeeming) pts -= 1000;
+        await setDoc(userRef, { points: pts + earned, name: name }, { merge: true });
+
+        // 5. Cart aur Storage poori tarah saaf karein
+        localStorage.removeItem(`platto_cart_${resId}`);
+        cart = [];
+        updateCartUI();
+
+    } catch(e) { 
+        console.error("Order error:", e);
+        alert("Order fail ho gaya: " + e.message); 
+    } finally {
+        if(loader) loader.style.display = "none";
+    }
+};
+
+// --- Success Screen close karne ka function ---
+window.closeSuccess = () => {
+    const success = document.getElementById('success-screen');
+    if(success) success.style.display = "none";
+    location.reload(); // Page refresh karein taaki fresh menu dikhe
 };
 
 // ==========================================
