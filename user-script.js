@@ -115,7 +115,7 @@ function renderCategories() {
 // 3. MENU & CUSTOMIZATION
 // ==========================================
 // ==========================================
-// 1. MENU RENDERING (Grid View with S/M/L Price Info)
+// 1. MENU RENDERING (Decide Direct Add or Customize)
 // ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
@@ -123,69 +123,73 @@ function loadMenu(category = 'All') {
         if (!grid) return;
         grid.innerHTML = "";
 
-        // Search Input check
         const searchInput = document.getElementById('menu-search');
         const search = searchInput ? searchInput.value.toLowerCase() : "";
 
         snap.forEach(d => {
             const item = d.data();
-            // Filter by Category and Search
             if (category !== 'All' && item.category !== category) return;
             if (search && !item.name.toLowerCase().includes(search)) return;
 
-            // Price Display Logic: Agar M aur L price hain toh range dikhao
+            // Price range string for UI
             let priceHTML = `₹${item.price}`;
-            if (item.priceM && item.priceM > 0) priceHTML += ` <small style='color:gray'> / M-₹${item.priceM}</small>`;
-            if (item.priceL && item.priceL > 0) priceHTML += ` <small style='color:gray'> / L-₹${item.priceL}</small>`;
+            if (item.priceM > 0) priceHTML += ` / M-₹${item.priceM}`;
+            if (item.priceL > 0) priceHTML += ` / L-₹${item.priceL}`;
+
+            // DECISION: Agar Medium/Large price 0 se bade hain toh modal khulega, nahi toh direct cart mein
+            const hasSizes = (item.priceM > 0 || item.priceL > 0);
+            const clickAction = hasSizes 
+                ? `window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/"/g, '&quot;')})`
+                : `window.addToCart("${item.name}", ${item.price})`;
 
             grid.innerHTML += `
-                <div class="food-card" onclick='window.openCustomize("${d.id}", ${JSON.stringify(item)})'>
+                <div class="food-card">
                     <img src="${item.imgUrl || 'https://via.placeholder.com/150'}" class="food-img">
                     <div class="food-info">
                         <h4>${item.name}</h4>
                         <b class="food-price">${priceHTML}</b>
-                        <button class="add-btn" style="width:100%; margin-top:8px;">ADD +</button>
+                        <button class="add-btn" onclick='${clickAction}'>ADD +</button>
                     </div>
                 </div>`;
         });
-        
-        const loaderEl = document.getElementById('loader');
-        if (loaderEl) loaderEl.style.display = "none";
+        if(document.getElementById('loader')) document.getElementById('loader').style.display = "none";
     });
 }
 
 // ==========================================
-// 2. OPEN CUSTOMIZE MODAL (S/M/L Logic)
+// 2. OPEN CUSTOMIZE MODAL (With Null-Safety Fix)
 // ==========================================
 window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
     
-    // UI Update: Name & Prices
-    const nameEl = document.getElementById('cust-item-name');
-    if(nameEl) nameEl.innerText = item.name;
-    
-    // Size Prices Set (S/M/L)
+    setUI('cust-item-name', item.name);
     setUI('p-price-s', "₹" + item.price);
     
-    // Medium Size Check
-    const medRow = document.querySelector('input[value="Medium"]').parentElement;
-    if (item.priceM && item.priceM > 0) {
-        setUI('p-price-m', "₹" + item.priceM);
-        medRow.style.display = "flex";
-    } else {
-        medRow.style.display = "none";
+    // Safety check for Medium Size
+    const medOption = document.getElementById('p-price-m');
+    if (medOption) {
+        const medRow = medOption.closest('.option-row') || medOption.parentElement;
+        if (item.priceM > 0) {
+            setUI('p-price-m', "₹" + item.priceM);
+            if(medRow) medRow.style.display = "flex";
+        } else {
+            if(medRow) medRow.style.display = "none";
+        }
     }
 
-    // Large Size Check
-    const lrgRow = document.querySelector('input[value="Large"]').parentElement;
-    if (item.priceL && item.priceL > 0) {
-        setUI('p-price-l', "₹" + item.priceL);
-        lrgRow.style.display = "flex";
-    } else {
-        lrgRow.style.display = "none";
+    // Safety check for Large Size
+    const lrgOption = document.getElementById('p-price-l');
+    if (lrgOption) {
+        const lrgRow = lrgOption.closest('.option-row') || lrgOption.parentElement;
+        if (item.priceL > 0) {
+            setUI('p-price-l', "₹" + item.priceL);
+            if(lrgRow) lrgRow.style.display = "flex";
+        } else {
+            if(lrgRow) lrgRow.style.display = "none";
+        }
     }
 
-    // Load Extras (Toppings) from Owner's Variants
+    // Load Extras/Variants logic
     const extrasDiv = document.getElementById('extras-options');
     if (extrasDiv) {
         extrasDiv.innerHTML = "";
@@ -197,55 +201,43 @@ window.openCustomize = (id, item) => {
                     <b>+₹${v.price}</b>
                 </label>`;
             });
-        } else {
-            extrasDiv.innerHTML = "<p style='font-size:0.7rem; color:gray;'>No extras available</p>";
         }
     }
     
-    showFlex('customizeModal');
+    const modal = document.getElementById('customizeModal');
+    if(modal) modal.style.display = "flex";
 };
 
 // ==========================================
-// 3. ADD CUSTOMIZED ITEM TO CART (Final Calculation)
+// 3. ADD TO CART (Direct & Customized)
 // ==========================================
+window.addToCart = (name, price) => {
+    const index = cart.findIndex(i => i.name === name);
+    if(index > -1) {
+        cart[index].qty++;
+    } else {
+        cart.push({ id: Date.now(), name: name, price: parseInt(price), qty: 1 });
+    }
+    saveCart();
+    alert("Added to Basket: " + name);
+};
+
 window.addCustomizedToCart = () => {
-    // 1. Get Selected Size
-    const sizeInput = document.querySelector('input[name="p-size"]:checked');
-    const size = sizeInput ? sizeInput.value : "Regular";
+    const selectedRadio = document.querySelector('input[name="p-size"]:checked');
+    const size = selectedRadio ? selectedRadio.value : "Regular";
     
-    // 2. Base Price based on Size
-    let finalPrice = parseInt(currentItemToCustomize.price); // Default Regular
-    if (size === 'Medium' && currentItemToCustomize.priceM) finalPrice = parseInt(currentItemToCustomize.priceM);
-    if (size === 'Large' && currentItemToCustomize.priceL) finalPrice = parseInt(currentItemToCustomize.priceL);
-    
-    // 3. Add Extras Price
-    let selectedExtras = [];
+    let finalPrice = parseInt(currentItemToCustomize.price);
+    if(size === 'Medium') finalPrice = parseInt(currentItemToCustomize.priceM);
+    if(size === 'Large') finalPrice = parseInt(currentItemToCustomize.priceL);
+
     document.querySelectorAll('.ex-item:checked').forEach(el => {
-        const extraPrice = parseInt(el.dataset.price) || 0;
-        finalPrice += extraPrice;
-        selectedExtras.push(el.value);
+        finalPrice += parseInt(el.dataset.price);
     });
 
-    // 4. Push to Cart Array
-    const cartItem = {
-        id: Date.now(),
-        name: `${currentItemToCustomize.name} (${size})`,
-        baseName: currentItemToCustomize.name,
-        size: size,
-        price: finalPrice,
-        extras: selectedExtras,
-        qty: 1
-    };
-
-    cart.push(cartItem);
+    const fullName = `${currentItemToCustomize.name} (${size})`;
+    window.addToCart(fullName, finalPrice);
     
-    // 5. Save and Update UI
-    saveCart(); 
     window.closeModal('customizeModal');
-    
-    // Haptic Feedback for Mobile
-    if (window.navigator.vibrate) window.navigator.vibrate(50);
-    alert(`${currentItemToCustomize.name} added to basket!`);
 };
 
 // ==========================================
