@@ -21,6 +21,8 @@ let isRedeeming = false;
 let couponDiscount = 0;
 let appliedCouponCode = "";
 let currentAuthMode = "login";
+let minOrderValue = 0;
+let maxDeliveryKM = 0;
 let userUID = "";
 let userPoints = 0;
 let currentItemToCustomize = null;
@@ -33,49 +35,98 @@ const showEl = (id, show = true) => { const el = document.getElementById(id); if
 const showFlex = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "flex" : "none"; };
 
 // ==========================================
-// 2. INITIALIZATION (APP START)
-// ==========================================
-async function init() {
-    if (!resId) {
-        document.body.innerHTML = "<div style='text-align:center; padding:100px;'><h3>⚠️ Invalid QR Code. Scan again.</h3></div>";
-        return;
-    }
+// ... (Auth imports aur variables same rahenge)
 
+// Global Settings from Owner
+
+async function init() {
+    if (!resId) return;
     const resSnap = await getDoc(doc(db, "restaurants", resId));
     if (resSnap.exists()) {
         restaurantData = resSnap.data();
+        
+        // --- Dynamic Delivery Settings Fetch ---
+        minOrderValue = parseInt(restaurantData.minOrder) || 0;
+        maxDeliveryKM = parseInt(restaurantData.maxKM) || 0;
+        
         renderBranding();
-        renderCategories(); // FIXED: Definition added below
-        handleAnnouncement();
+        renderCategories();
+        checkStoreTiming(); // Timing Logic
     }
+    // ... onAuthStateChanged logic ...
+}
 
-    onAuthStateChanged(auth, async (user) => {
-        const navAuthBtn = document.getElementById('nav-auth-btn');
-        const navProfileBtn = document.getElementById('nav-profile-btn');
+// --- 1. Fix: Send Instruction to Owner ---
+window.confirmOrder = async () => {
+    const name = document.getElementById('cust-name-final').value;
+    const note = document.getElementById('chef-note').value; // Instruction captured here
+    
+    if(!name) return alert("Please enter your name!");
+    
+    loader.style.display = "flex";
+    const finalBill = document.getElementById('final-amt').innerText;
+    
+    const orderData = {
+        resId, 
+        table: tableNo, 
+        customerName: name, 
+        userUID, 
+        items: cart,
+        total: finalBill, 
+        status: "Pending", 
+        paymentMode: selectedPaymentMode,
+        orderType, 
+        instruction: note, // NOW REACHING OWNER
+        timestamp: new Date(),
+        address: document.getElementById('cust-address').value || "At Table"
+    };
 
-        if (user) {
-            userUID = user.uid;
-            showEl('nav-auth-btn', false);
-            showEl('nav-profile-btn');
-            
-            onSnapshot(doc(db, "users", userUID), (uSnap) => {
-                if (uSnap.exists()) {
-                    userPoints = uSnap.data().points || 0;
-                    updatePointsUI();
-                    if(document.getElementById('user-profile-name')) document.getElementById('user-profile-name').value = uSnap.data().name || "";
-                    if(document.getElementById('user-profile-phone')) document.getElementById('user-profile-phone').value = uSnap.data().phone || "";
-                    if(document.getElementById('cust-name-final')) document.getElementById('cust-name-final').value = uSnap.data().name || "";
-                }
-            });
-        } else {
-            userUID = localStorage.getItem('p_guest_id') || "g_" + Date.now();
-            if(!localStorage.getItem('p_guest_id')) localStorage.setItem('p_guest_id', userUID);
-            showEl('nav-auth-btn');
-            showEl('nav-profile-btn', false);
+    try {
+        await addDoc(collection(db, "orders"), orderData);
+        document.getElementById('success-screen').style.display = "flex";
+        document.getElementById('s-name').innerText = name;
+        localStorage.removeItem(`platto_cart_${resId}`);
+        cart = [];
+    } catch(e) { alert("Order failed: " + e.message); }
+    loader.style.display = "none";
+};
+
+// --- 2. Fix: Dynamic Delivery Logic ---
+window.setOrderType = (type) => {
+    orderType = type;
+    const subtotal = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
+    
+    document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
+    document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
+
+    if(type === 'Delivery') {
+        // Checking against Owner's dynamic settings
+        if(subtotal < minOrderValue) {
+            alert(`Delivery ke liye minimum order ₹${minOrderValue} hona chahiye!`);
+            window.setOrderType('Pickup'); // Auto switch back
+            return;
         }
-        loadMenu();
-    });
-    updateCartUI();
+        
+        const msgBox = document.getElementById('delivery-dynamic-msg');
+        if(msgBox) msgBox.innerText = `⚠️ Delivery within ${maxDeliveryKM}KM (Min Order ₹${minOrderValue})`;
+        
+        document.getElementById('delivery-address-box').style.display = "block";
+    } else {
+        document.getElementById('delivery-address-box').style.display = "none";
+    }
+};
+
+// --- 3. Timing Logic (Extra Feature) ---
+function checkStoreTiming() {
+    const now = new Date();
+    const currentTime = now.getHours() + ":" + now.getMinutes();
+    const openTime = restaurantData.openTime || "09:00";
+    const closeTime = restaurantData.closeTime || "23:00";
+    
+    if (currentTime < openTime || currentTime > closeTime) {
+        // Optional: Show "Restaurant Closed" message
+        console.log("Restaurant is currently closed");
+    }
 }
 
 function renderBranding() {
