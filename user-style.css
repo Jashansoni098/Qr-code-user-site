@@ -123,27 +123,29 @@ body {
    5. MODALS (TRANSPARENT BACKGROUND & BLUR)
    ========================================== */
 .modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.5); /* FIX: Transparent dark overlay */
-    backdrop-filter: blur(10px); /* FIX: Professional blur effect */
-    z-index: 5000;
+    position: fixed !important; /* Screen par lock karne ke liye */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7) !important; /* Piche ka area dark karne ke liye */
+    backdrop-filter: blur(8px); /* Professional Blur */
+    z-index: 9999 !important; /* Isse upar kuch nahi aayega */
     display: none;
     justify-content: center;
-    align-items: center; /* Center for Desktop/Mobile */
+    align-items: center;
 }
 
 .modal-content {
-    background: var(--white);
-    width: 92%;
+    background: white;
+    width: 90%;
     max-width: 420px;
     padding: 25px;
-    border-radius: 28px;
+    border-radius: 24px;
     max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
 @keyframes modalPop {
@@ -237,12 +239,13 @@ body {
 .app-bottom-nav button.active { color: var(--primary); }
 
 .cart-floating-bar {
-    position: fixed; bottom: 85px; left: 50%;
-    transform: translateX(-50%); width: 92%;
-    max-width: 460px; background: var(--dark);
-    color: white; padding: 16px 20px; border-radius: 18px;
-    display: flex; justify-content: space-between; align-items: center;
-    z-index: 4000; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    position: fixed !important;
+    bottom: 85px !important; /* Bottom Nav ke upar fit rahega */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 92%;
+    max-width: 460px;
+    z-index: 4000 !important; /* Modal se niche, Bottom Nav se upar */
 }
 
 /* ==========================================

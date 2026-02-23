@@ -264,12 +264,20 @@ window.applyCoupon = async () => {
 // 5. CHECKOUT & DELIVERY
 // ==========================================
 window.openCheckoutModal = () => {
-    if(cart.length === 0) return alert("Basket empty!");
-    window.closeModal('cartModal');
-    showFlex('checkoutModal');
-    const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    const final = sub - (isRedeeming ? 10 : 0) - couponDiscount;
-    setUI('final-amt', (final < 0 ? 0 : final));
+    // 1. Pehle Cart modal ko band karein
+    const cartModal = document.getElementById('cartModal');
+    if(cartModal) cartModal.style.display = "none";
+
+    // 2. Phir Checkout modal ko dikhayein (flex use karein taaki center ho)
+    const checkModal = document.getElementById('checkoutModal');
+    if(checkModal) {
+        checkModal.style.display = "flex";
+        
+        // Final Amount Set karein
+        const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+        const finalAmt = isRedeeming ? subtotal - 10 : subtotal;
+        setUI('final-amt', finalAmt);
+    }
 };
 
 window.setOrderType = (type) => {
