@@ -416,3 +416,131 @@ body {
     content: "\f2f5"; /* FontAwesome Logout Icon */
     font-family: "Font Awesome 6 Free";
 }
+
+/* ==========================================
+   11. PREMIUM CUSTOMIZE MODAL (S/M/L Selection)
+   ========================================== */
+.customize-sheet {
+    border-radius: 30px 30px 0 0 !important; /* Bottom sheet look */
+    padding: 30px 20px !important;
+}
+
+.customize-body .section-title {
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    margin-bottom: 15px;
+    display: block;
+    text-align: left;
+}
+
+/* Radio Button & Checkbox Rows as Cards */
+.choice-row, .option-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: 0.2s;
+}
+
+/* Jab user size select kare toh border highlight ho */
+.choice-row:has(input:checked) {
+    border-color: var(--primary);
+    background: #fff1f2;
+    color: var(--primary);
+}
+
+.choice-row input[type="radio"], 
+.option-row input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+}
+
+.choice-row span b {
+    color: var(--dark);
+    font-size: 0.95rem;
+}
+
+/* ==========================================
+   12. PREMIUM FLOATING CART BAR (SWIGGY LOOK)
+   ========================================== */
+.cart-floating-bar {
+    position: fixed;
+    bottom: 85px; /* Bottom Nav ke upar */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    max-width: 460px;
+    background: var(--dark); /* Deep Dark Blue/Black */
+    color: white;
+    padding: 14px 20px;
+    border-radius: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 4000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.cart-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+#cart-qty {
+    background: var(--primary);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.btn-view-cart {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-view-cart::after {
+    content: '→';
+    font-size: 1.1rem;
+}
+
+/* ==========================================
+   13. SUCCESS SCREEN LOGO FIX
+   ========================================== */
+.success-check {
+    width: 80px;
+    height: 80px;
+    background: #dcfce7;
+    color: #22c55e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
+}
