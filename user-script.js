@@ -21,8 +21,6 @@ let isRedeeming = false;
 let couponDiscount = 0;
 let appliedCouponCode = "";
 let currentAuthMode = "login";
-let minOrderValue = 0;
-let maxDeliveryKM = 0;
 let userUID = "";
 let userPoints = 0;
 let currentItemToCustomize = null;
@@ -38,6 +36,8 @@ const showFlex = (id, show = true) => { const el = document.getElementById(id); 
 // ... (Auth imports aur variables same rahenge)
 
 // Global Settings from Owner
+let minOrderValue = 0;
+let maxDeliveryKM = 0;
 
 async function init() {
     if (!resId) return;
