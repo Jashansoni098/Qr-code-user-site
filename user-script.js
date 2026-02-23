@@ -27,8 +27,14 @@ let currentItemToCustomize = null;
 
 const loader = document.getElementById('loader');
 
-// Safety Helpers
-const setUI = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+// --- SAFETY HELPER: UI UPDATE (Prevents Null Errors) ---
+const setUI = (id, val) => { 
+    const el = document.getElementById(id); 
+    if(el) {
+        if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = val;
+        else el.innerText = val;
+    }
+};
 const showEl = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "block" : "none"; };
 const showFlex = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "flex" : "none"; };
 
@@ -41,7 +47,6 @@ async function init() {
         return;
     }
 
-    // 1. Fetch Restaurant Main Settings
     const resSnap = await getDoc(doc(db, "restaurants", resId));
     if (resSnap.exists()) {
         restaurantData = resSnap.data();
@@ -50,11 +55,7 @@ async function init() {
         handleAnnouncement();
     }
 
-    // 2. Auth & Loyalty Sync
     onAuthStateChanged(auth, async (user) => {
-        const navAuthBtn = document.getElementById('nav-auth-btn');
-        const navProfileBtn = document.getElementById('nav-profile-btn');
-
         if (user) {
             userUID = user.uid;
             showEl('nav-auth-btn', false);
@@ -64,9 +65,9 @@ async function init() {
                 if (uSnap.exists()) {
                     userPoints = uSnap.data().points || 0;
                     updatePointsUI();
-                    if(document.getElementById('user-profile-name')) document.getElementById('user-profile-name').value = uSnap.data().name || "";
-                    if(document.getElementById('user-profile-phone')) document.getElementById('user-profile-phone').value = uSnap.data().phone || "";
-                    if(document.getElementById('cust-name-final')) document.getElementById('cust-name-final').value = uSnap.data().name || "";
+                    setUI('user-profile-name', uSnap.data().name || "");
+                    setUI('user-profile-phone', uSnap.data().phone || "");
+                    setUI('cust-name-final', uSnap.data().name || "");
                 }
             });
         } else {
@@ -88,16 +89,14 @@ function renderBranding() {
     if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
     if(document.getElementById('hero-banner-img') && restaurantData.bannerUrl) document.getElementById('hero-banner-img').src = restaurantData.bannerUrl;
 
-    // WiFi
     if(restaurantData.wifiName) {
         showFlex('wifi-display');
         setUI('wifi-name', restaurantData.wifiName);
         setUI('wifi-pass', restaurantData.wifiPass);
     }
     // Socials
-    if(document.getElementById('link-fb')) document.getElementById('link-fb').href = restaurantData.fbLink || "#";
-    if(document.getElementById('link-ig')) document.getElementById('link-ig').href = restaurantData.igLink || "#";
-    if(document.getElementById('link-yt')) document.getElementById('link-yt').href = restaurantData.ytLink || "#";
+    const socials = { 'link-fb': 'fbLink', 'link-ig': 'igLink', 'link-yt': 'ytLink' };
+    for(let id in socials) { if(document.getElementById(id)) document.getElementById(id).href = restaurantData[socials[id]] || "#"; }
     if(document.getElementById('whatsapp-btn')) document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
 }
 
@@ -112,136 +111,75 @@ function renderCategories() {
 }
 
 // ==========================================
-// 3. MENU & CUSTOMIZATION
-// ==========================================
-// ==========================================
-// 1. MENU RENDERING (Decide Direct Add or Customize)
+// 3. MENU & CUSTOMIZATION (S/M/L logic)
 // ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
         const grid = document.getElementById('menu-list');
-        if (!grid) return;
-        grid.innerHTML = "";
-
-        const searchInput = document.getElementById('menu-search');
-        const search = searchInput ? searchInput.value.toLowerCase() : "";
+        if(!grid) return; grid.innerHTML = "";
+        const search = document.getElementById('menu-search') ? document.getElementById('menu-search').value.toLowerCase() : "";
 
         snap.forEach(d => {
             const item = d.data();
-            if (category !== 'All' && item.category !== category) return;
-            if (search && !item.name.toLowerCase().includes(search)) return;
-
-            // Price range string for UI
-            let priceHTML = `₹${item.price}`;
-            if (item.priceM > 0) priceHTML += ` / M-₹${item.priceM}`;
-            if (item.priceL > 0) priceHTML += ` / L-₹${item.priceL}`;
-
-            // DECISION: Agar Medium/Large price 0 se bade hain toh modal khulega, nahi toh direct cart mein
-            const hasSizes = (item.priceM > 0 || item.priceL > 0);
-            const clickAction = hasSizes 
-                ? `window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/"/g, '&quot;')})`
-                : `window.addToCart("${item.name}", ${item.price})`;
+            if(category !== 'All' && item.category !== category) return;
+            if(search && !item.name.toLowerCase().includes(search)) return;
 
             grid.innerHTML += `
-                <div class="food-card">
+                <div class="food-card" onclick='window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>
                     <img src="${item.imgUrl || 'https://via.placeholder.com/150'}" class="food-img">
                     <div class="food-info">
                         <h4>${item.name}</h4>
-                        <b class="food-price">${priceHTML}</b>
-                        <button class="add-btn" onclick='${clickAction}'>ADD +</button>
+                        <b class="food-price">₹${item.price}</b>
+                        <button class="add-btn" style="width:100%; margin-top:8px;">ADD +</button>
                     </div>
                 </div>`;
         });
-        if(document.getElementById('loader')) document.getElementById('loader').style.display = "none";
+        showEl('loader', false);
     });
 }
 
-// ==========================================
-// 2. OPEN CUSTOMIZE MODAL (With Null-Safety Fix)
-// ==========================================
 window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
-    
     setUI('cust-item-name', item.name);
-    setUI('p-price-s', "₹" + item.price);
     
-    // Safety check for Medium Size
-    const medOption = document.getElementById('p-price-m');
-    if (medOption) {
-        const medRow = medOption.closest('.option-row') || medOption.parentElement;
-        if (item.priceM > 0) {
-            setUI('p-price-m', "₹" + item.priceM);
-            if(medRow) medRow.style.display = "flex";
-        } else {
-            if(medRow) medRow.style.display = "none";
-        }
+    // Fill Sizes
+    const sizeBox = document.getElementById('size-options-container');
+    if(sizeBox) {
+        sizeBox.innerHTML = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
+        if(item.priceM) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
+        if(item.priceL) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
     }
 
-    // Safety check for Large Size
-    const lrgOption = document.getElementById('p-price-l');
-    if (lrgOption) {
-        const lrgRow = lrgOption.closest('.option-row') || lrgOption.parentElement;
-        if (item.priceL > 0) {
-            setUI('p-price-l', "₹" + item.priceL);
-            if(lrgRow) lrgRow.style.display = "flex";
-        } else {
-            if(lrgRow) lrgRow.style.display = "none";
-        }
-    }
-
-    // Load Extras/Variants logic
     const extrasDiv = document.getElementById('extras-options');
-    if (extrasDiv) {
+    if(extrasDiv) {
         extrasDiv.innerHTML = "";
-        if (restaurantData.variants && restaurantData.variants.length > 0) {
+        if(restaurantData.variants) {
             restaurantData.variants.forEach(v => {
-                extrasDiv.innerHTML += `
-                <label class="option-row">
+                extrasDiv.innerHTML += `<label class="option-row">
                     <span><input type="checkbox" class="ex-item" value="${v.name}" data-price="${v.price}"> ${v.name}</span>
                     <b>+₹${v.price}</b>
                 </label>`;
             });
         }
     }
-    
-    const modal = document.getElementById('customizeModal');
-    if(modal) modal.style.display = "flex";
-};
-
-// ==========================================
-// 3. ADD TO CART (Direct & Customized)
-// ==========================================
-window.addToCart = (name, price) => {
-    const index = cart.findIndex(i => i.name === name);
-    if(index > -1) {
-        cart[index].qty++;
-    } else {
-        cart.push({ id: Date.now(), name: name, price: parseInt(price), qty: 1 });
-    }
-    saveCart();
-    alert("Added to Basket: " + name);
+    showFlex('customizeModal');
 };
 
 window.addCustomizedToCart = () => {
-    const selectedRadio = document.querySelector('input[name="p-size"]:checked');
-    const size = selectedRadio ? selectedRadio.value : "Regular";
+    const sizeInput = document.querySelector('input[name="p-size"]:checked');
+    const size = sizeInput ? sizeInput.value : "Regular";
+    let price = parseInt(currentItemToCustomize.price);
+    if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM) || (price + 50);
+    if(size === 'Large') price = parseInt(currentItemToCustomize.priceL) || (price + 100);
     
-    let finalPrice = parseInt(currentItemToCustomize.price);
-    if(size === 'Medium') finalPrice = parseInt(currentItemToCustomize.priceM);
-    if(size === 'Large') finalPrice = parseInt(currentItemToCustomize.priceL);
-
-    document.querySelectorAll('.ex-item:checked').forEach(el => {
-        finalPrice += parseInt(el.dataset.price);
-    });
-
-    const fullName = `${currentItemToCustomize.name} (${size})`;
-    window.addToCart(fullName, finalPrice);
-    
+    document.querySelectorAll('.ex-item:checked').forEach(el => price += parseInt(el.dataset.price));
+    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, qty: 1 });
+    saveCart();
     window.closeModal('customizeModal');
 };
 
 // ==========================================
-// 4. BASKET & QUANTITY (+/-)
+// 4. BASKET & QUANTITY Logic
 // ==========================================
 function saveCart() {
     localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
@@ -249,8 +187,8 @@ function saveCart() {
 }
 
 function updateCartUI() {
-    const totalQty = cart.reduce((s, i) => s + (i.qty || 1), 0);
-    const totalAmt = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
+    const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+    const totalAmt = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     const bar = document.getElementById('cart-bar');
     if(cart.length > 0 && bar) {
         showFlex('cart-bar');
@@ -263,15 +201,14 @@ function updateCartUI() {
 window.renderCartList = () => {
     const list = document.getElementById('cart-items-list');
     if (!list) return;
-    list.innerHTML = cart.length === 0 ? "<div style='padding:40px; color:gray;'>Empty Basket</div>" : "";
-    
-    let subtotal = 0;
+    list.innerHTML = cart.length === 0 ? "<div style='padding:40px; color:gray;'>Basket is empty</div>" : "";
+    let sub = 0;
     cart.forEach((item, index) => {
-        const itemTotal = item.price * (item.qty || 1);
-        subtotal += itemTotal;
+        const itemTotal = item.price * item.qty;
+        sub += itemTotal;
         list.innerHTML += `
         <div class="cart-item">
-            <div class="item-info-box"><b>${item.name}</b><small>₹${item.price}</small></div>
+            <div class="item-main-info"><b>${item.name}</b><small>₹${item.price}</small></div>
             <div class="qty-control-box">
                 <button class="qty-btn-pro" onclick="window.changeQty(${index}, -1)">-</button>
                 <span class="qty-count-text">${item.qty}</span>
@@ -280,15 +217,11 @@ window.renderCartList = () => {
             <div style="font-weight:800; min-width:60px; text-align:right;">₹${itemTotal}</div>
         </div>`;
     });
-
-    setUI('summary-subtotal', "₹" + subtotal);
+    setUI('summary-subtotal', "₹" + sub);
     setUI('available-pts', userPoints);
     showEl('redeem-section', (userPoints >= 1000 && cart.length > 0));
 
-    let finalTotal = subtotal;
-    if (isRedeeming) finalTotal -= 10;
-    finalTotal -= couponDiscount;
-
+    let finalTotal = sub - (isRedeeming ? 10 : 0) - couponDiscount;
     setUI('summary-total', "₹" + (finalTotal < 0 ? 0 : finalTotal));
     showFlex('discount-line', isRedeeming);
     showFlex('coupon-discount-line', couponDiscount > 0);
@@ -299,8 +232,7 @@ window.changeQty = (index, delta) => {
     cart[index].qty = (cart[index].qty || 1) + delta;
     if (cart[index].qty <= 0) cart.splice(index, 1);
     if (appliedCouponCode) { couponDiscount = 0; appliedCouponCode = ""; setUI('coupon-msg', ""); }
-    saveCart(); 
-    window.renderCartList();
+    saveCart(); window.renderCartList();
 };
 
 window.applyCoupon = async () => {
@@ -315,32 +247,29 @@ window.applyCoupon = async () => {
             if (subtotal < c.minOrder) return alert(`Min order ₹${c.minOrder} required!`);
             couponDiscount = Math.min(Math.floor((subtotal * c.percent) / 100), c.maxDiscount);
             appliedCouponCode = code;
-            setUI('coupon-msg', `🎉 Applied: ₹${couponDiscount} OFF`);
+            setUI('coupon-msg', `🎉 Applied! ₹${couponDiscount} OFF`);
             window.renderCartList();
         } else alert("Invalid Coupon");
     } catch(e) { alert("Coupon Error"); }
 };
 
 // ==========================================
-// 5. CHECKOUT & DELIVERY LOGIC
+// 5. CHECKOUT & DELIVERY Logic
 // ==========================================
 window.openCheckoutModal = () => {
-    const cartModal = document.getElementById('cartModal');
-    if(cartModal) cartModal.style.display = "none";
-
-    const checkModal = document.getElementById('checkoutModal');
-    if(checkModal) {
-        checkModal.style.display = "flex";
-        const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-        const finalAmt = subtotal - (isRedeeming ? 10 : 0) - couponDiscount;
-        setUI('final-amt', finalAmt < 0 ? 0 : finalAmt);
-    }
+    window.closeModal('cartModal');
+    const modal = document.getElementById('checkoutModal');
+    if(modal) modal.style.display = "flex";
+    
+    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const final = subtotal - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('final-amt', (final < 0 ? 0 : final));
 };
 
 window.setOrderType = (type) => {
     orderType = type;
     const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    const minDlv = parseInt(restaurantData.minOrder) || 300;
+    const minDlv = parseInt(restaurantData.minOrder) || 0;
     
     if(document.getElementById('type-pickup')) document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
     if(document.getElementById('type-delivery')) document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
@@ -364,10 +293,13 @@ window.setPayMode = (mode) => {
     const qrArea = document.getElementById('payment-qr-area');
     if(mode === 'Online') {
         showEl('payment-qr-area');
-        const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
-        const amt = document.getElementById('final-amt').innerText;
-        new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
-        setUI('final-upi-id', "UPI: " + restaurantData.upiId);
+        const qrDiv = document.getElementById('checkout-payment-qr');
+        if(qrDiv) {
+            qrDiv.innerHTML = "";
+            const amt = document.getElementById('final-amt').innerText;
+            new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
+            setUI('final-upi-id', "UPI: " + restaurantData.upiId);
+        }
     } else showEl('payment-qr-area', false);
     if(document.getElementById('final-place-btn')) document.getElementById('final-place-btn').disabled = false;
 };
@@ -377,7 +309,7 @@ window.setPayMode = (mode) => {
 // ==========================================
 window.confirmOrder = async () => {
     const nameEl = document.getElementById('cust-name-final');
-    if(!nameEl || !nameEl.value.trim()) return alert("Enter Your Name!");
+    if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
     
     showEl('loader');
     const finalBill = document.getElementById('final-amt').innerText;
@@ -392,18 +324,13 @@ window.confirmOrder = async () => {
 
     try {
         await addDoc(collection(db, "orders"), orderData);
-        window.closeModal('checkoutModal');
-        showFlex('success-screen');
-        setUI('s-name', nameEl.value); setUI('s-table', tableNo);
-        
-        // Update Loyalty (Earn 10 per ₹100 spend)
+        showEl('success-screen'); setUI('s-name', nameEl.value); setUI('s-table', tableNo);
+        // Points Update
         const earned = Math.floor(parseInt(finalBill)/10);
         let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
         await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
-
-        localStorage.removeItem(`platto_cart_${resId}`);
-        cart = []; updateCartUI();
-    } catch(e) { alert("Error: " + e.message); }
+        localStorage.removeItem(`platto_cart_${resId}`); cart = []; updateCartUI();
+    } catch(e) { alert(e.message); }
     showEl('loader', false);
 };
 
@@ -420,7 +347,7 @@ window.openTrackingModal = () => {
             const o = d.data();
             if(["Pending", "Preparing", "Ready"].includes(o.status)) {
                 hasLive = true;
-                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary); padding:10px; margin-bottom:10px; background:#fff; text-align:left;">
+                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary);">
                     <span style="float:right; color:var(--primary); font-weight:800;">${o.status}</span>
                     <b>Table ${o.table}</b><br><small>Total: ₹${o.total}</small>
                 </div>`;
@@ -434,10 +361,10 @@ window.openHistoryModal = async () => {
     showFlex('historyModal');
     const list = document.getElementById('history-items-list');
     if(!list) return;
-    list.innerHTML = "Loading...";
+    list.innerHTML = "Loading history...";
     const q = query(collection(db, "orders"), where("userUID", "==", userUID), orderBy("timestamp", "desc"));
     const snap = await getDocs(q);
-    list.innerHTML = snap.empty ? "<p style='padding:20px;'>No past orders.</p>" : "";
+    list.innerHTML = snap.empty ? "<p>No orders yet.</p>" : "";
     snap.forEach(d => {
         const o = d.data();
         if(o.status === "Picked Up" || o.status === "Rejected") {
@@ -448,13 +375,13 @@ window.openHistoryModal = async () => {
 };
 
 // ==========================================
-// 8. OTHERS (AUTH, REDEEM, UI)
+// 8. OTHERS (AUTH, WIFI, ANNOUNCEMENT)
 // ==========================================
 function updatePointsUI() {
     setUI('user-pts', userPoints);
     setUI('profile-pts-display', userPoints);
-    const redeemBtn = document.getElementById('redeem-btn');
-    if(redeemBtn) redeemBtn.disabled = userPoints < 1000;
+    const btn = document.getElementById('redeem-btn');
+    if(btn) btn.disabled = userPoints < 1000;
 }
 
 window.handleAuth = async () => {
@@ -471,7 +398,7 @@ window.saveUserProfile = async () => {
     const n = document.getElementById('user-profile-name').value;
     const ph = document.getElementById('user-profile-phone').value;
     await setDoc(doc(db, "users", userUID), { name: n, phone: ph }, { merge: true });
-    alert("Profile Saved!"); window.closeModal('profileModal');
+    alert("Saved!"); window.closeModal('profileModal');
 };
 
 function handleAnnouncement() {
@@ -483,29 +410,15 @@ function handleAnnouncement() {
 
 window.filterByCategory = (cat, btn) => {
     document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active');
-    loadMenu(cat);
+    if(btn) btn.classList.add('active'); loadMenu(cat);
 };
-
-window.setAuthMode = (m) => {
-    currentAuthMode = m;
-    document.getElementById('tab-login').classList.toggle('active', m === 'login');
-    document.getElementById('tab-signup').classList.toggle('active', m === 'signup');
-};
-
 window.closeModal = (id) => showEl(id, false);
 window.openAuthModal = () => showFlex('authModal');
 window.openProfileModal = () => showFlex('profileModal');
 window.openCartModal = () => { showFlex('cartModal'); window.renderCartList(); };
 window.logout = () => signOut(auth).then(() => location.reload());
+window.setAuthMode = (m) => currentAuthMode = m;
 window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
 window.filterMenu = () => loadMenu();
-window.openSupportModal = () => showFlex('supportModal');
-window.submitSupportTicket = async () => {
-    const queryTxt = document.getElementById('support-query').value;
-    if(!queryTxt) return;
-    await addDoc(collection(db, "tickets"), { resId, userUID, query: queryTxt, time: new Date() });
-    alert("Ticket raised!"); window.closeModal('supportModal');
-};
 
 init();
