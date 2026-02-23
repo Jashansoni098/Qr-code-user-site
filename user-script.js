@@ -18,16 +18,16 @@ let restaurantData = {};
 let selectedPaymentMode = "";
 let orderType = "Pickup"; 
 let isRedeeming = false;
-let couponDiscount = 0;
-let appliedCouponCode = "";
 let currentAuthMode = "login";
 let userUID = "";
 let userPoints = 0;
 let currentItemToCustomize = null;
+let couponDiscount = 0;
+let appliedCouponCode = "";
 
 const loader = document.getElementById('loader');
 
-// Safety Helpers to prevent "null" errors
+// Safety Helpers: UI Update
 const setUI = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
 const showEl = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "block" : "none"; };
 const showFlex = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "flex" : "none"; };
@@ -41,6 +41,7 @@ async function init() {
         return;
     }
 
+    // 1. Fetch Restaurant Settings
     const resSnap = await getDoc(doc(db, "restaurants", resId));
     if (resSnap.exists()) {
         restaurantData = resSnap.data();
@@ -49,6 +50,7 @@ async function init() {
         handleAnnouncement();
     }
 
+    // 2. Auth & Loyalty Sync
     onAuthStateChanged(auth, async (user) => {
         const navAuthBtn = document.getElementById('nav-auth-btn');
         const navProfileBtn = document.getElementById('nav-profile-btn');
@@ -87,9 +89,8 @@ function renderBranding() {
     if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
     
     // WiFi Display
-    const wifiBox = document.getElementById('wifi-display');
-    if(restaurantData.wifiName && wifiBox) {
-        wifiBox.style.display = "flex";
+    if(restaurantData.wifiName) {
+        showFlex('wifi-display');
         setUI('wifi-name', restaurantData.wifiName);
         setUI('wifi-pass', restaurantData.wifiPass);
     }
@@ -183,7 +184,7 @@ function saveCart() {
 
 function updateCartUI() {
     const totalQty = cart.reduce((s, i) => s + (i.qty || 1), 0);
-    const totalAmt = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
+    const totalAmt = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     const bar = document.getElementById('cart-bar');
     if(cart.length > 0 && bar) {
         showFlex('cart-bar');
@@ -200,14 +201,14 @@ window.renderCartList = () => {
     let sub = 0;
     
     cart.forEach((item, index) => {
-        const itemTotal = item.price * (item.qty || 1);
+        const itemTotal = item.price * item.qty;
         sub += itemTotal;
         list.innerHTML += `
         <div class="cart-item">
             <div class="item-main-info"><b>${item.name}</b><small>₹${item.price}</small></div>
             <div class="qty-control-box">
                 <button class="qty-btn-pro" onclick="window.changeQty(${index}, -1)">-</button>
-                <span class="qty-count-text">${item.qty || 1}</span>
+                <span class="qty-count-text">${item.qty}</span>
                 <button class="qty-btn-pro" onclick="window.changeQty(${index}, 1)">+</button>
             </div>
             <div style="font-weight:800; min-width:60px; text-align:right;">₹${itemTotal}</div>
@@ -217,8 +218,8 @@ window.renderCartList = () => {
     setUI('summary-subtotal', "₹" + sub);
     setUI('available-pts', userPoints);
     
-    let total = sub - (isRedeeming ? 10 : 0) - couponDiscount;
-    setUI('summary-total', "₹" + (total < 0 ? 0 : total));
+    let totalPayable = sub - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('summary-total', "₹" + (totalPayable < 0 ? 0 : totalPayable));
     
     showFlex('discount-line', isRedeeming);
     showFlex('coupon-discount-line', couponDiscount > 0);
@@ -247,7 +248,7 @@ window.applyCoupon = async () => {
             if(subtotal < c.minOrder) return alert(`Minimum order ₹${c.minOrder} required!`);
             couponDiscount = Math.min(Math.floor((subtotal * c.percent) / 100), c.maxDiscount);
             appliedCouponCode = code;
-            setUI('coupon-msg', `🎉 Success! ₹${couponDiscount} OFF`);
+            setUI('coupon-msg', `🎉 Coupon Applied: ₹${couponDiscount} OFF`);
             window.renderCartList();
         } else alert("Invalid Coupon Code");
     } catch(e) { alert("Coupon Error"); }
@@ -279,7 +280,6 @@ window.setOrderType = (type) => {
             window.setOrderType('Pickup');
             return;
         }
-        setUI('delivery-dynamic-msg', `⚠️ Delivery within ${restaurantData.maxKM || 3}KM (Min Order ₹${minDlv})`);
         showEl('delivery-address-box');
     } else showEl('delivery-address-box', false);
 };
@@ -288,6 +288,7 @@ window.setPayMode = (mode) => {
     selectedPaymentMode = mode;
     document.getElementById('mode-online').classList.toggle('selected', mode === 'Online');
     document.getElementById('mode-cash').classList.toggle('selected', mode === 'Cash');
+    const qrArea = document.getElementById('payment-qr-area');
     if(mode === 'Online') {
         showEl('payment-qr-area');
         const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
@@ -324,7 +325,7 @@ window.confirmOrder = async () => {
         showFlex('success-screen');
         setUI('s-name', nameEl.value); setUI('s-table', tableNo);
 
-        // Update Loyalty
+        // Update Loyalty (Earn 10 per ₹100 spend)
         const earned = Math.floor(parseInt(finalBill)/10);
         let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
         await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
@@ -336,7 +337,7 @@ window.confirmOrder = async () => {
 };
 
 // ==========================================
-// 7. TRACKING & HISTORY (Separate Modals)
+// 7. TRACKING & HISTORY
 // ==========================================
 window.openTrackingModal = () => {
     showFlex('trackingModal');
@@ -376,7 +377,7 @@ window.openHistoryModal = async () => {
 };
 
 // ==========================================
-// 8. OTHERS (AUTH, REDEEM, UI)
+// 8. HELPERS & AUTH
 // ==========================================
 function updatePointsUI() {
     setUI('user-pts', userPoints);
@@ -399,7 +400,7 @@ window.saveUserProfile = async () => {
     const n = document.getElementById('user-profile-name').value;
     const ph = document.getElementById('user-profile-phone').value;
     await setDoc(doc(db, "users", userUID), { name: n, phone: ph }, { merge: true });
-    alert("Saved!"); window.closeModal('profileModal');
+    alert("Profile Saved!"); window.closeModal('profileModal');
 };
 
 function handleAnnouncement() {
@@ -409,30 +410,22 @@ function handleAnnouncement() {
     }
 }
 
-// UI Global Toggles
 window.filterByCategory = (cat, btn) => {
     document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active');
-    loadMenu(cat);
+    if(btn) btn.classList.add('active'); loadMenu(cat);
 };
 window.setAuthMode = (m) => {
     currentAuthMode = m;
     document.getElementById('tab-login').classList.toggle('active', m === 'login');
     document.getElementById('tab-signup').classList.toggle('active', m === 'signup');
 };
+
 window.closeModal = (id) => showEl(id, false);
 window.openAuthModal = () => showFlex('authModal');
 window.openProfileModal = () => showFlex('profileModal');
 window.openCartModal = () => { showFlex('cartModal'); window.renderCartList(); };
 window.logout = () => signOut(auth).then(() => location.reload());
-window.redeemPoints = () => { isRedeeming = true; alert("Discount Applied!"); window.openCartModal(); };
-window.openSupportModal = () => showFlex('supportModal');
-window.submitSupportTicket = async () => {
-    const queryTxt = document.getElementById('support-query').value;
-    if(!queryTxt) return;
-    await addDoc(collection(db, "tickets"), { resId, userUID, query: queryTxt, time: new Date() });
-    alert("Ticket raised!"); window.closeModal('supportModal');
-};
+window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
 window.filterMenu = () => loadMenu();
 
 init();
