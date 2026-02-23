@@ -41,18 +41,17 @@ async function init() {
         return;
     }
 
+    // Fetch Restaurant Settings
     const resSnap = await getDoc(doc(db, "restaurants", resId));
     if (resSnap.exists()) {
         restaurantData = resSnap.data();
         renderBranding();
-        renderCategories(); // FIXED: Definition below
+        renderCategories();
         handleAnnouncement();
     }
 
+    // Auth & Loyalty Sync
     onAuthStateChanged(auth, async (user) => {
-        const navAuthBtn = document.getElementById('nav-auth-btn');
-        const navProfileBtn = document.getElementById('nav-profile-btn');
-
         if (user) {
             userUID = user.uid;
             showEl('nav-auth-btn', false);
@@ -74,6 +73,7 @@ async function init() {
             showEl('nav-profile-btn', false);
         }
         loadMenu();
+        checkLiveOrders(); 
     });
     updateCartUI();
 }
@@ -107,13 +107,15 @@ function renderCategories() {
 }
 
 // ==========================================
-// 3. MENU & CUSTOMIZATION (S/M/L)
+// 3. MENU & CUSTOMIZATION (S/M/L) - FIXED EMPTY MODAL
 // ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
         const grid = document.getElementById('menu-list');
-        if(!grid) return; grid.innerHTML = "";
-        const search = document.getElementById('menu-search') ? document.getElementById('menu-search').value.toLowerCase() : "";
+        if(!grid) return;
+        grid.innerHTML = "";
+        const searchInput = document.getElementById('menu-search');
+        const search = searchInput ? searchInput.value.toLowerCase() : "";
 
         snap.forEach(d => {
             const item = d.data();
@@ -137,10 +139,10 @@ window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
     document.getElementById('cust-item-name').innerText = item.name;
     
-    // Map prices from Firestore (price, priceM, priceL)
+    // Size Logic Fix
     setUI('p-price-s', "₹" + item.price);
-    setUI('p-price-m', item.priceM ? "₹" + item.priceM : "N/A");
-    setUI('p-price-l', item.priceL ? "₹" + item.priceL : "N/A");
+    setUI('p-price-m', item.priceM ? "₹" + item.priceM : "₹" + (parseInt(item.price) + 50));
+    setUI('p-price-l', item.priceL ? "₹" + item.priceL : "₹" + (parseInt(item.price) + 100));
 
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
@@ -161,19 +163,19 @@ window.addCustomizedToCart = () => {
     const sizeInput = document.querySelector('input[name="p-size"]:checked');
     const size = sizeInput ? sizeInput.value : "Regular";
     
-    let basePrice = parseInt(currentItemToCustomize.price);
-    if(size === 'Medium' && currentItemToCustomize.priceM) basePrice = parseInt(currentItemToCustomize.priceM);
-    if(size === 'Large' && currentItemToCustomize.priceL) basePrice = parseInt(currentItemToCustomize.priceL);
+    let price = parseInt(currentItemToCustomize.price);
+    if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM) || (price + 50);
+    if(size === 'Large') price = parseInt(currentItemToCustomize.priceL) || (price + 100);
     
-    document.querySelectorAll('.ex-item:checked').forEach(el => basePrice += parseInt(el.dataset.price));
+    document.querySelectorAll('.ex-item:checked').forEach(el => price += parseInt(el.dataset.price));
     
-    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price: basePrice, qty: 1 });
+    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, qty: 1 });
     saveCart();
     window.closeModal('customizeModal');
 };
 
 // ==========================================
-// 4. BASKET LOGIC (+/- & Coupon)
+// 4. BASKET LOGIC (Quantity +/- & Coupon)
 // ==========================================
 function saveCart() {
     localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
@@ -181,7 +183,7 @@ function saveCart() {
 }
 
 function updateCartUI() {
-    const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+    const totalQty = cart.reduce((s, i) => s + (i.qty || 1), 0);
     const totalAmt = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     const bar = document.getElementById('cart-bar');
     if(cart.length > 0 && bar) {
@@ -192,22 +194,15 @@ function updateCartUI() {
     } else if(bar) showEl('cart-bar', false);
 }
 
-window.changeQty = (index, delta) => {
-    cart[index].qty = (cart[index].qty || 1) + delta;
-    if(cart[index].qty <= 0) cart.splice(index, 1);
-    if(appliedCouponCode) { couponDiscount = 0; appliedCouponCode = ""; setUI('coupon-msg', ""); }
-    saveCart(); 
-    window.renderCartList();
-};
-
 window.renderCartList = () => {
     const list = document.getElementById('cart-items-list');
-    if(!list) return;
-    list.innerHTML = cart.length === 0 ? "<p style='padding:20px;'>Basket is empty</p>" : "";
-    let sub = 0;
+    if (!list) return;
+    list.innerHTML = cart.length === 0 ? "<div style='padding:40px; color:gray;'>Empty Basket</div>" : "";
+    
+    let subtotal = 0;
     cart.forEach((item, index) => {
         const itemTotal = item.price * item.qty;
-        sub += itemTotal;
+        subtotal += itemTotal;
         list.innerHTML += `
         <div class="cart-item">
             <div class="item-main-info"><b>${item.name}</b><small>₹${item.price}</small></div>
@@ -219,41 +214,58 @@ window.renderCartList = () => {
             <div style="font-weight:800; min-width:60px; text-align:right;">₹${itemTotal}</div>
         </div>`;
     });
-    setUI('summary-subtotal', "₹" + sub);
-    let totalPayable = sub - (isRedeeming ? 10 : 0) - couponDiscount;
-    setUI('summary-total', "₹" + (totalPayable < 0 ? 0 : totalPayable));
+
+    setUI('summary-subtotal', "₹" + subtotal);
+    setUI('available-pts', userPoints);
+    showEl('redeem-section', (userPoints >= 1000 && cart.length > 0));
+
+    let finalTotal = subtotal;
+    if (isRedeeming) finalTotal -= 10;
+    finalTotal -= couponDiscount;
+
+    setUI('summary-total', "₹" + (finalTotal < 0 ? 0 : finalTotal));
     showFlex('discount-line', isRedeeming);
     showFlex('coupon-discount-line', couponDiscount > 0);
     setUI('coupon-discount-val', "-₹" + couponDiscount);
 };
 
+window.changeQty = (index, delta) => {
+    cart[index].qty = (cart[index].qty || 1) + delta;
+    if (cart[index].qty <= 0) cart.splice(index, 1);
+    if (appliedCouponCode) { couponDiscount = 0; appliedCouponCode = ""; setUI('coupon-msg', ""); }
+    saveCart(); 
+    window.renderCartList();
+};
+
 window.applyCoupon = async () => {
     const code = document.getElementById('coupon-code').value.trim().toUpperCase();
-    if(!code) return alert("Enter Code");
+    if (!code) return alert("Enter Code");
     const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+
     try {
         const q = query(collection(db, "restaurants", resId, "coupons"), where("code", "==", code));
         const snap = await getDocs(q);
-        if(!snap.empty) {
-            const c = snap.docs[0].data();
-            if(subtotal < c.minOrder) return alert(`Min order ₹${c.minOrder} required!`);
-            couponDiscount = Math.min(Math.floor((subtotal * c.percent) / 100), c.maxDiscount);
+        if (!snap.empty) {
+            const cData = snap.docs[0].data();
+            if (subtotal < cData.minOrder) return alert(`Min order ₹${cData.minOrder} required!`);
+            couponDiscount = Math.min(Math.floor((subtotal * cData.percent) / 100), cData.maxDiscount);
             appliedCouponCode = code;
             setUI('coupon-msg', `🎉 Applied! ₹${couponDiscount} OFF`);
             window.renderCartList();
         } else alert("Invalid Coupon");
-    } catch(e) { alert("Coupon Error"); }
+    } catch (e) { alert("Error applying coupon."); }
 };
 
 // ==========================================
-// 5. CHECKOUT & CONFIRM
+// 5. CHECKOUT & ORDERING
 // ==========================================
 window.openCheckoutModal = () => {
     if(cart.length === 0) return alert("Basket empty!");
     window.closeModal('cartModal');
     showFlex('checkoutModal');
     const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    setUI('final-amt', (sub - (isRedeeming ? 10 : 0) - couponDiscount));
+    const final = sub - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('final-amt', (final < 0 ? 0 : final));
 };
 
 window.setOrderType = (type) => {
@@ -264,77 +276,8 @@ window.setOrderType = (type) => {
     document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
     if(type === 'Delivery') {
         if(subtotal < minDlv) { alert(`Min ₹${minDlv} for delivery!`); window.setOrderType('Pickup'); return; }
-        setUI('delivery-dynamic-msg', `⚠️ Delivery within ${restaurantData.maxKM || 3}KM (Min Order ₹${minDlv})`);
         showEl('delivery-address-box');
     } else showEl('delivery-address-box', false);
-};
-
-window.confirmOrder = async () => {
-    const nameInput = document.getElementById('cust-name-final');
-    if(!nameInput || !nameInput.value.trim()) return alert("Enter Name!");
-    showEl('loader');
-    const orderData = {
-        resId, table: tableNo, customerName: nameInput.value, userUID, items: cart,
-        total: document.getElementById('final-amt').innerText, status: "Pending", 
-        paymentMode: selectedPaymentMode, orderType, timestamp: new Date(),
-        instruction: document.getElementById('chef-note').value || "", 
-        address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : ""
-    };
-    try {
-        await addDoc(collection(db, "orders"), orderData);
-        showFlex('success-screen'); setUI('s-name', nameInput.value); setUI('s-table', tableNo);
-        // Points Update
-        const earned = Math.floor(parseInt(orderData.total)/10);
-        let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
-        await setDoc(doc(db, "users", userUID), { points: newPts, name: nameInput.value }, { merge: true });
-        localStorage.removeItem(`platto_cart_${resId}`); cart = [];
-    } catch(e) { alert(e.message); }
-    showEl('loader', false);
-};
-
-// ==========================================
-// 6. TRACKING, HELPERS & AUTH
-// ==========================================
-window.openTrackingModal = () => {
-    showFlex('trackingModal');
-    const list = document.getElementById('live-tracking-list');
-    onSnapshot(query(collection(db, "orders"), where("userUID", "==", userUID)), (snap) => {
-        if(!list) return; list.innerHTML = "";
-        let hasLive = false;
-        snap.forEach(d => {
-            const o = d.data();
-            if(["Pending", "Preparing", "Ready"].includes(o.status)) {
-                hasLive = true;
-                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary); padding:10px; margin-bottom:10px; background:#fff;">
-                    <span style="float:right; color:var(--primary); font-weight:800;">${o.status}</span>
-                    <b>Table ${o.table}</b><br><small>₹${o.total}</small>
-                </div>`;
-            }
-        });
-        if(!hasLive) list.innerHTML = "<p>No active orders.</p>";
-    });
-};
-
-window.openHistoryModal = async () => {
-    showFlex('historyModal');
-    const list = document.getElementById('history-items-list');
-    if(!list) return; list.innerHTML = "Loading...";
-    const q = query(collection(db, "orders"), where("userUID", "==", userUID), orderBy("timestamp", "desc"));
-    const snap = await getDocs(q);
-    list.innerHTML = snap.empty ? "<p>No past orders.</p>" : "";
-    snap.forEach(d => {
-        const o = d.data();
-        if(o.status === "Picked Up" || o.status === "Rejected") {
-            list.innerHTML += `<div class="history-item"><b>${o.timestamp.toDate().toLocaleDateString('en-GB')}</b> - ₹${o.total} [${o.status}]</div>`;
-        }
-    });
-};
-
-window.updatePointsUI = () => {
-    setUI('user-pts', userPoints);
-    setUI('profile-pts-display', userPoints);
-    const btn = document.getElementById('redeem-btn');
-    if(btn) btn.disabled = userPoints < 1000;
 };
 
 window.setPayMode = (mode) => {
@@ -344,25 +287,109 @@ window.setPayMode = (mode) => {
     if(mode === 'Online') {
         showEl('payment-qr-area');
         const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
-        new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${document.getElementById('final-amt').innerText}`, width: 140, height: 140 });
+        const amt = document.getElementById('final-amt').innerText;
+        new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
         setUI('final-upi-id', restaurantData.upiId);
     } else showEl('payment-qr-area', false);
     document.getElementById('final-place-btn').disabled = false;
 };
 
-window.filterByCategory = (cat, btn) => {
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active'); loadMenu(cat);
+window.confirmOrder = async () => {
+    const nameEl = document.getElementById('cust-name-final');
+    if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
+    showEl('loader');
+    const finalBill = document.getElementById('final-amt').innerText;
+    const orderData = {
+        resId, table: tableNo, customerName: nameEl.value, userUID, items: cart,
+        total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
+        orderType, timestamp: new Date(), instruction: document.getElementById('chef-note').value || "",
+        address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : ""
+    };
+
+    try {
+        await addDoc(collection(db, "orders"), orderData);
+        showFlex('success-screen'); setUI('s-name', nameEl.value); setUI('s-table', tableNo);
+        // Points Update
+        const earned = Math.floor(parseInt(finalBill)/10);
+        let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
+        await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
+        localStorage.removeItem(`platto_cart_${resId}`); cart = []; updateCartUI();
+    } catch(e) { alert(e.message); }
+    showEl('loader', false);
 };
 
+// ==========================================
+// 6. TRACKING & HISTORY
+// ==========================================
+window.openTrackingModal = () => {
+    showFlex('trackingModal');
+    const list = document.getElementById('live-tracking-list');
+    onSnapshot(query(collection(db, "orders"), where("userUID", "==", userUID)), (snap) => {
+        if(!list) return; list.innerHTML = "";
+        let hasLive = false;
+        snap.forEach(d => {
+            const o = d.data();
+            if(!["Picked Up", "Rejected", "Done"].includes(o.status)) {
+                hasLive = true;
+                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary); padding:10px; margin-bottom:10px; background:#fff; text-align:left;">
+                    <span style="float:right; color:var(--primary); font-weight:800;">${o.status}</span>
+                    <b>Table ${o.table}</b><br><small>₹${o.total}</small>
+                </div>`;
+            }
+        });
+        if(!hasLive) list.innerHTML = "<p style='padding:20px;'>No active orders.</p>";
+    });
+};
+
+window.openHistoryModal = async () => {
+    showFlex('historyModal');
+    const list = document.getElementById('history-items-list');
+    if(!list) return;
+    list.innerHTML = "Loading history...";
+    const q = query(collection(db, "orders"), where("userUID", "==", userUID), orderBy("timestamp", "desc"));
+    const snap = await getDocs(q);
+    list.innerHTML = snap.empty ? "<p style='padding:20px;'>No past orders.</p>" : "";
+    snap.forEach(d => {
+        const o = d.data();
+        if(o.status === "Picked Up" || o.status === "Rejected") {
+            const date = o.timestamp ? o.timestamp.toDate().toLocaleDateString('en-GB') : "Old";
+            list.innerHTML += `<div class="history-item"><b>${date}</b> - ₹${o.total} [${o.status}]</div>`;
+        }
+    });
+};
+
+// ==========================================
+// 7. OTHERS (AUTH, REDEEM, UI)
+// ==========================================
+function updatePointsUI() {
+    setUI('user-pts', userPoints);
+    setUI('profile-pts-display', userPoints);
+    setUI('available-pts', userPoints);
+    const redeemBtn = document.getElementById('redeem-btn');
+    if(redeemBtn) redeemBtn.disabled = userPoints < 1000;
+}
+
+window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
+window.setAuthMode = (m) => {
+    currentAuthMode = m;
+    document.getElementById('tab-login').classList.toggle('active', m === 'login');
+    document.getElementById('tab-signup').classList.toggle('active', m === 'signup');
+};
 window.handleAuth = async () => {
     const e = document.getElementById('auth-email').value;
     const p = document.getElementById('auth-pass').value;
     try {
         if(currentAuthMode === 'login') await signInWithEmailAndPassword(auth, e, p);
         else await createUserWithEmailAndPassword(auth, e, p);
-        window.closeModal('authModal');
+        window.closeAuthModal();
     } catch(err) { alert(err.message); }
+};
+
+window.saveUserProfile = async () => {
+    const n = document.getElementById('user-profile-name').value;
+    const ph = document.getElementById('user-profile-phone').value;
+    await setDoc(doc(db, "users", userUID), { name: n, phone: ph }, { merge: true });
+    alert("Profile Saved!"); window.closeModal('profileModal');
 };
 
 function handleAnnouncement() {
@@ -372,12 +399,26 @@ function handleAnnouncement() {
     }
 }
 
+window.filterByCategory = (cat, btn) => {
+    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    loadMenu(cat);
+};
+
 window.closeModal = (id) => showEl(id, false);
 window.openAuthModal = () => showFlex('authModal');
 window.openProfileModal = () => showFlex('profileModal');
+window.openCartModal = () => { showFlex('cartModal'); window.renderCartList(); };
 window.logout = () => signOut(auth).then(() => location.reload());
-window.setAuthMode = (m) => { currentAuthMode = m; document.getElementById('tab-login').classList.toggle('active', m==='login'); document.getElementById('tab-signup').classList.toggle('active', m==='signup'); };
-window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
 window.filterMenu = () => loadMenu();
+window.openTracking = () => window.openTrackingModal();
+window.closeTracking = () => window.closeModal('trackingModal');
+window.openSupportModal = () => showFlex('supportModal');
+window.submitSupportTicket = async () => {
+    const queryTxt = document.getElementById('support-query').value;
+    if(!queryTxt) return;
+    await addDoc(collection(db, "tickets"), { resId, userUID, query: queryTxt, time: new Date() });
+    alert("Ticket raised!"); window.closeModal('supportModal');
+};
 
 init();
