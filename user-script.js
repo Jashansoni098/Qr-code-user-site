@@ -142,18 +142,24 @@ window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
     
     // 1. Name Set karein
-    document.getElementById('cust-item-name').innerText = item.name;
+    setUI('cust-item-name', item.name);
     
-    // 2. Ingredients Set karein (FIXED)
-    const ingEl = document.getElementById('cust-item-ingredients');
-    if(ingEl) {
-        ingEl.innerText = item.ingredients ? item.ingredients : "Freshly prepared with quality ingredients.";
+    // 2. Ingredients Logic (FIXED)
+    const ingBox = document.getElementById('ing-box-ui');
+    const ingText = document.getElementById('cust-item-ingredients');
+    
+    if (item.ingredients && item.ingredients.trim() !== "") {
+        if(ingBox) ingBox.style.display = "block";
+        if(ingText) ingText.innerText = item.ingredients;
+    } else {
+        // Agar ingredients nahi hain toh box chhupa do
+        if(ingBox) ingBox.style.display = "none";
     }
     
     // 3. Prices Set karein
-    setUI('p-price-s', "₹" + item.price);
-    setUI('p-price-m', item.priceM ? "₹" + item.priceM : "₹" + (parseInt(item.price) + 50));
-    setUI('p-price-l', item.priceL ? "₹" + item.priceL : "₹" + (parseInt(item.price) + 100));
+    setUI('p-price-s', "Regular ₹" + item.price);
+    setUI('p-price-m', item.priceM ? "Medium ₹" + item.priceM : "N/A");
+    setUI('p-price-l', item.priceL ? "Large ₹" + item.priceL : "N/A");
 
     // 4. Extras/Variants Load karein
     const extrasDiv = document.getElementById('extras-options');

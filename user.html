@@ -137,14 +137,16 @@
     <!-- 1. CUSTOMIZE MODAL (Pizza Size & Extras) -->
     <div id="customizeModal" class="modal-overlay" style="display:none;">
         <div class="modal-content customize-sheet">
-            <div class="modal-header">
-                <h3 id="cust-item-name">Customize</h3>
-                <span class="close-x" onclick="window.closeModal('customizeModal')">&times;</span>
-            </div>
-            <!-- NEW: Ingredients Section -->
-<div id="cust-ingredients-box" style="margin-bottom: 15px; text-align: left; background: #f1f5f9; padding: 10px; border-radius: 12px;">
-    <small style="color: var(--gray); font-weight: 800; text-transform: uppercase; font-size: 0.65rem;">Ingredients / Details:</small>
-    <p id="cust-item-ingredients" style="font-size: 0.85rem; margin: 5px 0 0 0; color: var(--dark); font-weight: 600;"></p>
+          <!-- Customize Modal ke andar Title ke theek niche ise replace karein -->
+<div class="modal-header">
+    <h3 id="cust-item-name">Customize</h3>
+    <span class="close-x" onclick="window.closeModal('customizeModal')">&times;</span>
+</div>
+
+<!-- INGREDIENTS BOX -->
+<div id="ing-box-ui" style="background: #f8fafc; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: left; border-left: 4px solid var(--primary);">
+    <small style="color: var(--gray); font-weight: 800; font-size: 0.6rem; text-transform: uppercase;">Ingredients:</small>
+    <p id="cust-item-ingredients" style="margin: 3px 0 0 0; font-size: 0.85rem; font-weight: 600; color: #1e293b;"></p>
 </div>
             <div class="customize-body">
                 <p class="section-title">Select Size</p>
