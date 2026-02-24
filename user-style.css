@@ -640,3 +640,61 @@ body {
     display: block;
     margin-bottom: 2px;
 }
+
+/* ==========================================
+   PROFESSIONAL CLOSE BUTTON (MODAL)
+   ========================================== */
+.btn-close {
+    background: #f1f5f9; /* Light grey background */
+    color: #64748b; /* Slate grey text */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%; /* Poori width lega taaki Submit ke niche sahi dikhe */
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-close:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.btn-close:active {
+    transform: scale(0.98);
+}
+
+/* Agar aap use sirf ek simple text link ki tarah dikhana chahte hain (Alternate Style) */
+.btn-text {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 15px;
+    text-decoration: underline;
+    transition: 0.3s;
+}
+
+.btn-text:hover {
+    color: var(--primary);
+}
+
+.close-modal-x {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 1.8rem;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+}
+.close-modal-x:hover {
+    color: var(--primary);
+}
