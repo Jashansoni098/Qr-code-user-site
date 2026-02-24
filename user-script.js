@@ -27,7 +27,7 @@ let currentItemToCustomize = null;
 
 const loader = document.getElementById('loader');
 
-// --- SAFETY HELPERS: UI Update (Prevents Null Errors) ---
+// --- SAFETY HELPER: UI UPDATE ---
 const setUI = (id, val) => { 
     const el = document.getElementById(id); 
     if(el) {
@@ -56,9 +56,6 @@ async function init() {
     }
 
     onAuthStateChanged(auth, async (user) => {
-        const navAuthBtn = document.getElementById('nav-auth-btn');
-        const navProfileBtn = document.getElementById('nav-profile-btn');
-
         if (user) {
             userUID = user.uid;
             showEl('nav-auth-btn', false);
@@ -84,38 +81,8 @@ async function init() {
     updateCartUI();
 }
 
-function renderBranding() {
-    setUI('res-name-display', restaurantData.name);
-    setUI('wait-time', restaurantData.prepTime || "20");
-    setUI('res-about-text', restaurantData.about || "");
-    setUI('tbl-no', tableNo);
-    if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
-    if(document.getElementById('hero-banner-img') && restaurantData.bannerUrl) document.getElementById('hero-banner-img').src = restaurantData.bannerUrl;
-
-    if(restaurantData.wifiName) {
-        showFlex('wifi-display');
-        setUI('wifi-name', restaurantData.wifiName);
-        setUI('wifi-pass', restaurantData.wifiPass);
-    }
-    // Social Links
-    if(document.getElementById('link-fb')) document.getElementById('link-fb').href = restaurantData.fbLink || "#";
-    if(document.getElementById('link-ig')) document.getElementById('link-ig').href = restaurantData.igLink || "#";
-    if(document.getElementById('link-yt')) document.getElementById('link-yt').href = restaurantData.ytLink || "#";
-    if(document.getElementById('whatsapp-btn')) document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
-}
-
-function renderCategories() {
-    const list = document.getElementById('categories-list');
-    if(restaurantData.categories && list) {
-        list.innerHTML = `<button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>`;
-        restaurantData.categories.forEach(cat => {
-            list.innerHTML += `<button class="cat-pill" onclick="window.filterByCategory('${cat}', this)">${cat}</button>`;
-        });
-    }
-}
-
 // ==========================================
-// 3. MENU & CUSTOMIZATION (S/M/L logic)
+// 3. MENU & CUSTOMIZATION (S/M/L Fix)
 // ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
@@ -128,10 +95,9 @@ function loadMenu(category = 'All') {
             if(category !== 'All' && item.category !== category) return;
             if(search && !item.name.toLowerCase().includes(search)) return;
 
-            // Check if item has multiple sizes
+            // Check if sizes exist (PriceM or PriceL > 0)
             const hasSizes = (item.priceM > 0 || item.priceL > 0);
             
-            // DECISION: Agar sizes hain toh modal khulega, warna direct add hoga
             const clickAction = hasSizes 
                 ? `window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})`
                 : `window.addToCart("${item.name}", ${item.price})`;
@@ -152,19 +118,19 @@ function loadMenu(category = 'All') {
 
 window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
-    
-    // 1. Name Set karein
     setUI('cust-item-name', item.name);
     
-    // 2. Ingredients Logic (FIXED)
-    // Agar aapke HTML mein ingredients dikhane ke liye ID nahi hai, toh use JS se create karenge
-    const body = document.querySelector('.customize-body');
-    let ingHtml = "";
+    // 1. Ingredients Logic
+    const ingBox = document.getElementById('ing-box-ui'); // Make sure this exists in HTML
+    const ingText = document.getElementById('cust-item-ingredients');
     if (item.ingredients && item.ingredients.trim() !== "") {
-        ingHtml = `<p style="font-size:0.8rem; color:gray; margin-bottom:15px;">📝 ${item.ingredients}</p>`;
+        if(ingBox) ingBox.style.display = "block";
+        setUI('cust-item-ingredients', item.ingredients);
+    } else {
+        if(ingBox) ingBox.style.display = "none";
     }
 
-    // 3. Sizes Generation logic (FIXED)
+    // 2. Sizes Generation (Syncing with Firestore fields: price, priceM, priceL)
     const sizeBox = document.getElementById('size-options');
     if(sizeBox) {
         let sizeHTML = `<p class="section-title">Select Size</p>`;
@@ -176,10 +142,10 @@ window.openCustomize = (id, item) => {
         if(item.priceL && item.priceL > 0) {
             sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
         }
-        sizeBox.innerHTML = ingHtml + sizeHTML; // Ingredients + Sizes
+        sizeBox.innerHTML = sizeHTML;
     }
 
-    // 4. Extras/Variants load karna
+    // 3. Extras/Toppings
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
         extrasDiv.innerHTML = "";
@@ -199,22 +165,19 @@ window.addCustomizedToCart = () => {
     const sizeInput = document.querySelector('input[name="p-size"]:checked');
     const size = sizeInput ? sizeInput.value : "Regular";
     
-    // Price picking logic based on size selected
-    let basePrice = parseInt(currentItemToCustomize.price); // Default Regular
-    if(size === 'Medium') basePrice = parseInt(currentItemToCustomize.priceM);
-    if(size === 'Large') basePrice = parseInt(currentItemToCustomize.priceL);
+    // Price logic based on Firestore screenshot fields
+    let price = parseInt(currentItemToCustomize.price); 
+    if(size === 'Medium' && currentItemToCustomize.priceM) price = parseInt(currentItemToCustomize.priceM);
+    if(size === 'Large' && currentItemToCustomize.priceL) price = parseInt(currentItemToCustomize.priceL);
     
-    // Add extra variants price
+    // Add Extras
     let selectedExtras = [];
     document.querySelectorAll('.ex-item:checked').forEach(el => {
-        basePrice += parseInt(el.dataset.price);
+        price += parseInt(el.dataset.price);
         selectedExtras.push(el.value);
     });
 
-    // Cart update logic
-    const cartItemName = `${currentItemToCustomize.name} (${size})`;
-    cart.push({ id: Date.now(), name: cartItemName, price: basePrice, qty: 1, extras: selectedExtras });
-    
+    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, qty: 1, extras: selectedExtras });
     saveCart();
     window.closeModal('customizeModal');
     if (window.navigator.vibrate) window.navigator.vibrate(50);
@@ -229,8 +192,8 @@ function saveCart() {
 }
 
 function updateCartUI() {
-    const totalQty = cart.reduce((s, i) => s + i.qty, 0);
-    const totalAmt = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const totalQty = cart.reduce((s, i) => s + (i.qty || 1), 0);
+    const totalAmt = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
     const bar = document.getElementById('cart-bar');
     if(cart.length > 0 && bar) {
         showFlex('cart-bar');
@@ -243,11 +206,10 @@ function updateCartUI() {
 window.renderCartList = () => {
     const list = document.getElementById('cart-items-list');
     if (!list) return;
-    list.innerHTML = cart.length === 0 ? "<div style='padding:40px; color:gray;'>Your basket is empty</div>" : "";
+    list.innerHTML = cart.length === 0 ? "<div style='padding:40px; color:gray;'>Empty Basket</div>" : "";
     let sub = 0;
-    
     cart.forEach((item, index) => {
-        const itemTotal = item.price * item.qty;
+        const itemTotal = item.price * (item.qty || 1);
         sub += itemTotal;
         list.innerHTML += `
         <div class="cart-item">
@@ -260,7 +222,6 @@ window.renderCartList = () => {
             <div style="font-weight:800; min-width:60px; text-align:right;">₹${itemTotal}</div>
         </div>`;
     });
-
     setUI('summary-subtotal', "₹" + sub);
     setUI('available-pts', userPoints);
     showEl('redeem-section', (userPoints >= 1000 && cart.length > 0));
@@ -276,8 +237,7 @@ window.changeQty = (index, delta) => {
     cart[index].qty = (cart[index].qty || 1) + delta;
     if (cart[index].qty <= 0) cart.splice(index, 1);
     if (appliedCouponCode) { couponDiscount = 0; appliedCouponCode = ""; setUI('coupon-msg', ""); }
-    saveCart(); 
-    window.renderCartList();
+    saveCart(); window.renderCartList();
 };
 
 window.applyCoupon = async () => {
@@ -299,12 +259,12 @@ window.applyCoupon = async () => {
 };
 
 // ==========================================
-// 5. CHECKOUT & DELIVERY LOGIC
+// 5. CHECKOUT & DELIVERY Logic
 // ==========================================
 window.openCheckoutModal = () => {
-    if(cart.length === 0) return alert("Basket empty!");
     window.closeModal('cartModal');
-    showFlex('checkoutModal');
+    const modal = document.getElementById('checkoutModal');
+    if(modal) modal.style.display = "flex";
     const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     const final = sub - (isRedeeming ? 10 : 0) - couponDiscount;
     setUI('final-amt', (final < 0 ? 0 : final));
@@ -313,7 +273,7 @@ window.openCheckoutModal = () => {
 window.setOrderType = (type) => {
     orderType = type;
     const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    const minDlv = parseInt(restaurantData.minOrder) || 0;
+    const minDlv = parseInt(restaurantData.minOrder) || 300;
     
     document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
     document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
@@ -333,27 +293,22 @@ window.setPayMode = (mode) => {
     selectedPaymentMode = mode;
     document.getElementById('mode-online').classList.toggle('selected', mode === 'Online');
     document.getElementById('mode-cash').classList.toggle('selected', mode === 'Cash');
-    
-    const qrArea = document.getElementById('payment-qr-area');
     if(mode === 'Online') {
         showEl('payment-qr-area');
-        const qrDiv = document.getElementById('checkout-payment-qr');
-        if(qrDiv) {
-            qrDiv.innerHTML = "";
-            const amt = document.getElementById('final-amt').innerText;
-            new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
-            setUI('final-upi-id', "UPI ID: " + restaurantData.upiId);
-        }
+        const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
+        const amt = document.getElementById('final-amt').innerText;
+        new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
+        setUI('final-upi-id', "UPI: " + restaurantData.upiId);
     } else showEl('payment-qr-area', false);
     document.getElementById('final-place-btn').disabled = false;
 };
 
 // ==========================================
-// 6. CONFIRM ORDER & SUCCESS
+// 6. CONFIRM ORDER & TRACKING
 // ==========================================
 window.confirmOrder = async () => {
     const nameEl = document.getElementById('cust-name-final');
-    if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
+    if(!nameEl || !nameEl.value.trim()) return alert("Kripya apna naam bhariye!");
     
     showEl('loader');
     const finalBill = document.getElementById('final-amt').innerText;
@@ -362,35 +317,29 @@ window.confirmOrder = async () => {
         resId, table: tableNo, customerName: nameEl.value, userUID, items: cart,
         total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
         orderType, timestamp: new Date(), 
-        instruction: document.getElementById('chef-note').value || "", 
+        instruction: document.getElementById('chef-note') ? document.getElementById('chef-note').value : "", 
         address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : "At Table"
     };
 
     try {
         await addDoc(collection(db, "orders"), orderData);
-        
-        // Update Loyalty: Earn 10 pts per ₹100 spend
-        const earned = Math.floor(parseInt(finalBill)/10);
-        const userRef = doc(db, "users", userUID);
-        const uSnap = await getDoc(userRef);
-        let currentPts = uSnap.exists() ? uSnap.data().points : 0;
-        if(isRedeeming) currentPts -= 1000;
-        await setDoc(userRef, { points: currentPts + earned, name: nameEl.value }, { merge: true });
-
-        // Show Success View
         window.closeModal('checkoutModal');
         showFlex('success-screen');
-        setUI('s-name', nameEl.value);
-        setUI('s-table', tableNo);
+        setUI('s-name', nameEl.value); setUI('s-table', tableNo);
+
+        // Update Loyalty (₹100 = 10pts)
+        const earned = Math.floor(parseInt(finalBill)/10);
+        let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
+        await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
 
         localStorage.removeItem(`platto_cart_${resId}`);
         cart = []; updateCartUI();
-    } catch(e) { alert("Error: " + e.message); }
+    } catch(e) { alert("Error placing order: " + e.message); }
     showEl('loader', false);
 };
 
 // ==========================================
-// 7. TRACKING, HISTORY & AUTH
+// 7. TRACKING & HISTORY Logic
 // ==========================================
 window.openTrackingModal = () => {
     showFlex('trackingModal');
@@ -402,9 +351,9 @@ window.openTrackingModal = () => {
             const o = d.data();
             if(!["Picked Up", "Rejected", "Done"].includes(o.status)) {
                 hasActive = true;
-                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary); padding:10px; margin-bottom:10px; background:#fff;">
-                    <span style="float:right; font-weight:800; color:var(--primary);">${o.status}</span>
-                    <b>Table ${o.table}</b><br><small>Total Bill: ₹${o.total}</small>
+                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary); padding:10px; margin-bottom:10px; background:#fff; text-align:left;">
+                    <span style="float:right; color:var(--primary); font-weight:800;">${o.status}</span>
+                    <b>Table ${o.table}</b><br><small>Total: ₹${o.total}</small>
                 </div>`;
             }
         });
@@ -422,24 +371,38 @@ window.openHistoryModal = async () => {
     list.innerHTML = snap.empty ? "<p style='padding:20px;'>No past orders.</p>" : "";
     snap.forEach(d => {
         const o = d.data();
-        if(o.status === "Picked Up" || o.status === "Done") {
+        if(["Picked Up", "Rejected", "Done"].includes(o.status)) {
             const date = o.timestamp ? o.timestamp.toDate().toLocaleDateString('en-GB') : "Old";
-            list.innerHTML += `<div class="history-item" style="padding:15px; border-bottom:1px solid #eee; text-align:left;"><b>${date}</b> - ₹${o.total}</div>`;
+            list.innerHTML += `<div class="history-item" style="padding:15px; border-bottom:1px solid #eee; text-align:left;"><b>${date}</b> - ₹${o.total} [${o.status}]</div>`;
         }
     });
 };
 
-window.updatePointsUI = () => {
+// ==========================================
+// 8. OTHERS (Branding, Categories, Utils)
+// ==========================================
+function renderBranding() {
+    setUI('res-name-display', restaurantData.name);
+    setUI('wait-time', restaurantData.prepTime || "20");
+    setUI('res-about-text', restaurantData.about || "");
+    setUI('tbl-no', tableNo);
+    if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
+}
+
+function updatePointsUI() {
     setUI('user-pts', userPoints);
     setUI('profile-pts-display', userPoints);
     setUI('available-pts', userPoints);
     const redeemBtn = document.getElementById('redeem-btn');
     if(redeemBtn) redeemBtn.disabled = userPoints < 1000;
+}
+
+window.filterByCategory = (cat, btn) => {
+    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    loadMenu(cat);
 };
 
-// ==========================================
-// 8. OTHERS
-// ==========================================
 window.handleAuth = async () => {
     const e = document.getElementById('auth-email').value;
     const p = document.getElementById('auth-pass').value;
@@ -454,14 +417,13 @@ window.saveUserProfile = async () => {
     const n = document.getElementById('user-profile-name').value;
     const ph = document.getElementById('user-profile-phone').value;
     await setDoc(doc(db, "users", userUID), { name: n, phone: ph }, { merge: true });
-    alert("Profile Saved!"); window.closeModal('profileModal');
+    alert("Saved!"); window.closeModal('profileModal');
 };
 
 function handleAnnouncement() {
     if(restaurantData.activeAnnouncement) {
         showFlex('announcement-modal');
-        setUI('ann-title', restaurantData.annTitle);
-        setUI('ann-desc', restaurantData.annText);
+        setUI('ann-title', restaurantData.annTitle); setUI('ann-desc', restaurantData.annText);
     }
 }
 
@@ -473,11 +435,6 @@ window.addToCart = (name, price) => {
     alert(name + " added!");
 };
 
-window.filterByCategory = (cat, btn) => {
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active');
-    loadMenu(cat);
-};
 window.closeModal = (id) => showEl(id, false);
 window.openAuthModal = () => showFlex('authModal');
 window.openProfileModal = () => showFlex('profileModal');
@@ -486,12 +443,12 @@ window.logout = () => signOut(auth).then(() => location.reload());
 window.setAuthMode = (m) => currentAuthMode = m;
 window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
 window.filterMenu = () => loadMenu();
+window.openSupportModal = () => showFlex('supportModal');
 window.submitSupportTicket = async () => {
-    const queryTxt = document.getElementById('support-query').value;
-    if(!queryTxt) return;
-    await addDoc(collection(db, "tickets"), { resId, userUID, query: queryTxt, time: new Date() });
+    const q = document.getElementById('support-query').value;
+    if(!q) return;
+    await addDoc(collection(db, "tickets"), { resId, userUID, query: q, time: new Date() });
     alert("Ticket raised!"); window.closeModal('supportModal');
 };
-window.openSupportModal = () => showFlex('supportModal');
 
 init();
