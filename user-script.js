@@ -113,6 +113,7 @@ function renderCategories() {
 // ==========================================
 // 3. MENU & CUSTOMIZATION (S/M/L logic)
 // ==========================================
+// --- 1. Load Menu (Isme click action fix kiya hai) ---
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
         const grid = document.getElementById('menu-list');
@@ -124,12 +125,18 @@ function loadMenu(category = 'All') {
             if(category !== 'All' && item.category !== category) return;
             if(search && !item.name.toLowerCase().includes(search)) return;
 
+            // Check if item has multiple sizes
+            const hasSizes = (item.priceM > 0 || item.priceL > 0);
+            const clickAction = hasSizes 
+                ? `window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})`
+                : `window.addToCart("${item.name}", ${item.price})`;
+
             grid.innerHTML += `
-                <div class="food-card" onclick='window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                <div class="food-card" onclick='${clickAction}'>
                     <img src="${item.imgUrl || 'https://via.placeholder.com/150'}" class="food-img">
                     <div class="food-info">
                         <h4>${item.name}</h4>
-                        <b class="food-price">₹${item.price}</b>
+                        <b class="food-price">₹${item.price}${hasSizes ? ' +' : ''}</b>
                         <button class="add-btn" style="width:100%; margin-top:8px;">ADD +</button>
                     </div>
                 </div>`;
@@ -138,18 +145,26 @@ function loadMenu(category = 'All') {
     });
 }
 
+// --- 2. Open Customize Modal (Yahan sizes generate honge) ---
 window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
     setUI('cust-item-name', item.name);
     
-    // Fill Sizes
-    const sizeBox = document.getElementById('size-options-container');
+    // Sizes list generate karna
+    const sizeBox = document.getElementById('size-options');
     if(sizeBox) {
-        sizeBox.innerHTML = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
-        if(item.priceM) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
-        if(item.priceL) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
+        let sizeHTML = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
+        
+        if(item.priceM && item.priceM > 0) {
+            sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
+        }
+        if(item.priceL && item.priceL > 0) {
+            sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
+        }
+        sizeBox.innerHTML = sizeHTML;
     }
 
+    // Extras/Variants load karna
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
         extrasDiv.innerHTML = "";
@@ -165,16 +180,20 @@ window.openCustomize = (id, item) => {
     showFlex('customizeModal');
 };
 
+// --- 3. Add Customized to Cart (Price Calculation fix) ---
 window.addCustomizedToCart = () => {
     const sizeInput = document.querySelector('input[name="p-size"]:checked');
     const size = sizeInput ? sizeInput.value : "Regular";
-    let price = parseInt(currentItemToCustomize.price);
-    if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM) || (price + 50);
-    if(size === 'Large') price = parseInt(currentItemToCustomize.priceL) || (price + 100);
+    
+    let price = parseInt(currentItemToCustomize.price); // Default Regular
+    if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM);
+    if(size === 'Large') price = parseInt(currentItemToCustomize.priceL);
     
     document.querySelectorAll('.ex-item:checked').forEach(el => price += parseInt(el.dataset.price));
-    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, qty: 1 });
-    saveCart();
+    
+    // Cart mein add karna
+    const itemNameWithSize = `${currentItemToCustomize.name} (${size})`;
+    window.addToCart(itemNameWithSize, price);
     window.closeModal('customizeModal');
 };
 
