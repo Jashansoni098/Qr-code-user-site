@@ -121,16 +121,17 @@ function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
         const grid = document.getElementById('menu-list');
         if(!grid) return; grid.innerHTML = "";
-        const searchInput = document.getElementById('menu-search');
-        const search = searchInput ? searchInput.value.toLowerCase() : "";
+        const search = document.getElementById('menu-search') ? document.getElementById('menu-search').value.toLowerCase() : "";
 
         snap.forEach(d => {
             const item = d.data();
             if(category !== 'All' && item.category !== category) return;
             if(search && !item.name.toLowerCase().includes(search)) return;
 
-            // Decide if customization modal is needed
+            // Check if item has multiple sizes
             const hasSizes = (item.priceM > 0 || item.priceL > 0);
+            
+            // DECISION: Agar sizes hain toh modal khulega, warna direct add hoga
             const clickAction = hasSizes 
                 ? `window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})`
                 : `window.addToCart("${item.name}", ${item.price})`;
@@ -151,18 +152,34 @@ function loadMenu(category = 'All') {
 
 window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
+    
+    // 1. Name Set karein
     setUI('cust-item-name', item.name);
     
-    // Sizes Generation
-    const sizeBox = document.getElementById('size-options');
-    if(sizeBox) {
-        let sizeHTML = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
-        if(item.priceM > 0) sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
-        if(item.priceL > 0) sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
-        sizeBox.innerHTML = sizeHTML;
+    // 2. Ingredients Logic (FIXED)
+    // Agar aapke HTML mein ingredients dikhane ke liye ID nahi hai, toh use JS se create karenge
+    const body = document.querySelector('.customize-body');
+    let ingHtml = "";
+    if (item.ingredients && item.ingredients.trim() !== "") {
+        ingHtml = `<p style="font-size:0.8rem; color:gray; margin-bottom:15px;">📝 ${item.ingredients}</p>`;
     }
 
-    // Extras/Variants Generation
+    // 3. Sizes Generation logic (FIXED)
+    const sizeBox = document.getElementById('size-options');
+    if(sizeBox) {
+        let sizeHTML = `<p class="section-title">Select Size</p>`;
+        sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
+        
+        if(item.priceM && item.priceM > 0) {
+            sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
+        }
+        if(item.priceL && item.priceL > 0) {
+            sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
+        }
+        sizeBox.innerHTML = ingHtml + sizeHTML; // Ingredients + Sizes
+    }
+
+    // 4. Extras/Variants load karna
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
         extrasDiv.innerHTML = "";
@@ -182,19 +199,25 @@ window.addCustomizedToCart = () => {
     const sizeInput = document.querySelector('input[name="p-size"]:checked');
     const size = sizeInput ? sizeInput.value : "Regular";
     
-    let price = parseInt(currentItemToCustomize.price);
-    if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM) || (price + 50);
-    if(size === 'Large') price = parseInt(currentItemToCustomize.priceL) || (price + 100);
+    // Price picking logic based on size selected
+    let basePrice = parseInt(currentItemToCustomize.price); // Default Regular
+    if(size === 'Medium') basePrice = parseInt(currentItemToCustomize.priceM);
+    if(size === 'Large') basePrice = parseInt(currentItemToCustomize.priceL);
     
+    // Add extra variants price
     let selectedExtras = [];
     document.querySelectorAll('.ex-item:checked').forEach(el => {
-        price += parseInt(el.dataset.price);
+        basePrice += parseInt(el.dataset.price);
         selectedExtras.push(el.value);
     });
 
-    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, extras: selectedExtras, qty: 1 });
+    // Cart update logic
+    const cartItemName = `${currentItemToCustomize.name} (${size})`;
+    cart.push({ id: Date.now(), name: cartItemName, price: basePrice, qty: 1, extras: selectedExtras });
+    
     saveCart();
     window.closeModal('customizeModal');
+    if (window.navigator.vibrate) window.navigator.vibrate(50);
 };
 
 // ==========================================
