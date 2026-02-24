@@ -27,55 +27,19 @@ let currentItemToCustomize = null;
 
 const loader = document.getElementById('loader');
 
-// Safety Helpers
-const setUI = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+// --- SAFETY HELPERS: UI Update (Prevents Null Errors) ---
+const setUI = (id, val) => { 
+    const el = document.getElementById(id); 
+    if(el) {
+        if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = val;
+        else el.innerText = val;
+    }
+};
 const showEl = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "block" : "none"; };
 const showFlex = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "flex" : "none"; };
 
 // ==========================================
-// 2. CORE BASKET FUNCTIONS (Global Fix)
-// ==========================================
-
-// FIX: window.addToCart ko sabse pehle define kiya taaki HTML ise dhoond sake
-window.addToCart = (name, price) => {
-    const index = cart.findIndex(i => i.name === name);
-    if(index > -1) {
-        cart[index].qty++;
-    } else {
-        cart.push({ id: Date.now(), name, price: parseInt(price), qty: 1 });
-    }
-    saveCart();
-    alert(name + " added to basket!");
-};
-
-window.changeQty = (index, delta) => {
-    cart[index].qty = (cart[index].qty || 1) + delta;
-    if (cart[index].qty <= 0) cart.splice(index, 1);
-    if (appliedCouponCode) { couponDiscount = 0; appliedCouponCode = ""; setUI('coupon-msg', ""); }
-    saveCart(); 
-    window.renderCartList();
-};
-
-function saveCart() {
-    localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
-    updateCartUI();
-}
-
-function updateCartUI() {
-    const totalQty = cart.reduce((s, i) => s + (i.qty || 1), 0);
-    const totalAmt = cart.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
-    const bar = document.getElementById('cart-bar');
-    if(cart.length > 0 && bar) {
-        showFlex('cart-bar');
-        setUI('cart-qty', totalQty + " Items");
-        setUI('cart-total', totalAmt);
-        const badge = document.getElementById('cart-badge-count');
-        if(badge) badge.innerText = totalQty;
-    } else if(bar) showEl('cart-bar', false);
-}
-
-// ==========================================
-// 3. INITIALIZATION (APP START)
+// 2. INITIALIZATION (APP START)
 // ==========================================
 async function init() {
     if (!resId) {
@@ -92,6 +56,9 @@ async function init() {
     }
 
     onAuthStateChanged(auth, async (user) => {
+        const navAuthBtn = document.getElementById('nav-auth-btn');
+        const navProfileBtn = document.getElementById('nav-profile-btn');
+
         if (user) {
             userUID = user.uid;
             showEl('nav-auth-btn', false);
@@ -101,9 +68,9 @@ async function init() {
                 if (uSnap.exists()) {
                     userPoints = uSnap.data().points || 0;
                     updatePointsUI();
-                    if(document.getElementById('user-profile-name')) document.getElementById('user-profile-name').value = uSnap.data().name || "";
-                    if(document.getElementById('user-profile-phone')) document.getElementById('user-profile-phone').value = uSnap.data().phone || "";
-                    if(document.getElementById('cust-name-final')) document.getElementById('cust-name-final').value = uSnap.data().name || "";
+                    setUI('user-profile-name', uSnap.data().name || "");
+                    setUI('user-profile-phone', uSnap.data().phone || "");
+                    setUI('cust-name-final', uSnap.data().name || "");
                 }
             });
         } else {
@@ -117,26 +84,63 @@ async function init() {
     updateCartUI();
 }
 
+function renderBranding() {
+    setUI('res-name-display', restaurantData.name);
+    setUI('wait-time', restaurantData.prepTime || "20");
+    setUI('res-about-text', restaurantData.about || "");
+    setUI('tbl-no', tableNo);
+    if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
+    if(document.getElementById('hero-banner-img') && restaurantData.bannerUrl) document.getElementById('hero-banner-img').src = restaurantData.bannerUrl;
+
+    if(restaurantData.wifiName) {
+        showFlex('wifi-display');
+        setUI('wifi-name', restaurantData.wifiName);
+        setUI('wifi-pass', restaurantData.wifiPass);
+    }
+    // Social Links
+    if(document.getElementById('link-fb')) document.getElementById('link-fb').href = restaurantData.fbLink || "#";
+    if(document.getElementById('link-ig')) document.getElementById('link-ig').href = restaurantData.igLink || "#";
+    if(document.getElementById('link-yt')) document.getElementById('link-yt').href = restaurantData.ytLink || "#";
+    if(document.getElementById('whatsapp-btn')) document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
+}
+
+function renderCategories() {
+    const list = document.getElementById('categories-list');
+    if(restaurantData.categories && list) {
+        list.innerHTML = `<button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>`;
+        restaurantData.categories.forEach(cat => {
+            list.innerHTML += `<button class="cat-pill" onclick="window.filterByCategory('${cat}', this)">${cat}</button>`;
+        });
+    }
+}
+
 // ==========================================
-// 4. MENU & CUSTOMIZATION (S/M/L logic)
+// 3. MENU & CUSTOMIZATION (S/M/L logic)
 // ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
         const grid = document.getElementById('menu-list');
         if(!grid) return; grid.innerHTML = "";
-        const search = document.getElementById('menu-search') ? document.getElementById('menu-search').value.toLowerCase() : "";
+        const searchInput = document.getElementById('menu-search');
+        const search = searchInput ? searchInput.value.toLowerCase() : "";
 
         snap.forEach(d => {
             const item = d.data();
             if(category !== 'All' && item.category !== category) return;
             if(search && !item.name.toLowerCase().includes(search)) return;
 
+            // Decide if customization modal is needed
+            const hasSizes = (item.priceM > 0 || item.priceL > 0);
+            const clickAction = hasSizes 
+                ? `window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})`
+                : `window.addToCart("${item.name}", ${item.price})`;
+
             grid.innerHTML += `
-                <div class="food-card" onclick='window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                <div class="food-card" onclick='${clickAction}'>
                     <img src="${item.imgUrl || 'https://via.placeholder.com/150'}" class="food-img">
                     <div class="food-info">
                         <h4>${item.name}</h4>
-                        <b class="food-price">₹${item.price}</b>
+                        <b class="food-price">₹${item.price}${hasSizes ? ' +' : ''}</b>
                         <button class="add-btn" style="width:100%; margin-top:8px;">ADD +</button>
                     </div>
                 </div>`;
@@ -149,14 +153,16 @@ window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
     setUI('cust-item-name', item.name);
     
-    // Fill Sizes
+    // Sizes Generation
     const sizeBox = document.getElementById('size-options');
     if(sizeBox) {
-        sizeBox.innerHTML = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
-        if(item.priceM) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
-        if(item.priceL) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
+        let sizeHTML = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
+        if(item.priceM > 0) sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
+        if(item.priceL > 0) sizeHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
+        sizeBox.innerHTML = sizeHTML;
     }
 
+    // Extras/Variants Generation
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
         extrasDiv.innerHTML = "";
@@ -175,23 +181,48 @@ window.openCustomize = (id, item) => {
 window.addCustomizedToCart = () => {
     const sizeInput = document.querySelector('input[name="p-size"]:checked');
     const size = sizeInput ? sizeInput.value : "Regular";
+    
     let price = parseInt(currentItemToCustomize.price);
     if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM) || (price + 50);
     if(size === 'Large') price = parseInt(currentItemToCustomize.priceL) || (price + 100);
     
-    document.querySelectorAll('.ex-item:checked').forEach(el => price += parseInt(el.dataset.price));
-    window.addToCart(`${currentItemToCustomize.name} (${size})`, price);
+    let selectedExtras = [];
+    document.querySelectorAll('.ex-item:checked').forEach(el => {
+        price += parseInt(el.dataset.price);
+        selectedExtras.push(el.value);
+    });
+
+    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, extras: selectedExtras, qty: 1 });
+    saveCart();
     window.closeModal('customizeModal');
 };
 
 // ==========================================
-// 5. CHECKOUT & COUPONS
+// 4. BASKET & QUANTITY Logic
 // ==========================================
+function saveCart() {
+    localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
+    updateCartUI();
+}
+
+function updateCartUI() {
+    const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+    const totalAmt = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const bar = document.getElementById('cart-bar');
+    if(cart.length > 0 && bar) {
+        showFlex('cart-bar');
+        setUI('cart-qty', totalQty + " Items");
+        setUI('cart-total', totalAmt);
+        if(document.getElementById('cart-badge-count')) document.getElementById('cart-badge-count').innerText = totalQty;
+    } else if(bar) showEl('cart-bar', false);
+}
+
 window.renderCartList = () => {
     const list = document.getElementById('cart-items-list');
     if (!list) return;
-    list.innerHTML = cart.length === 0 ? "<div style='padding:40px; color:gray;'>Basket is empty</div>" : "";
+    list.innerHTML = cart.length === 0 ? "<div style='padding:40px; color:gray;'>Your basket is empty</div>" : "";
     let sub = 0;
+    
     cart.forEach((item, index) => {
         const itemTotal = item.price * item.qty;
         sub += itemTotal;
@@ -206,6 +237,7 @@ window.renderCartList = () => {
             <div style="font-weight:800; min-width:60px; text-align:right;">₹${itemTotal}</div>
         </div>`;
     });
+
     setUI('summary-subtotal', "₹" + sub);
     setUI('available-pts', userPoints);
     showEl('redeem-section', (userPoints >= 1000 && cart.length > 0));
@@ -215,6 +247,14 @@ window.renderCartList = () => {
     showFlex('discount-line', isRedeeming);
     showFlex('coupon-discount-line', couponDiscount > 0);
     setUI('coupon-discount-val', "-₹" + couponDiscount);
+};
+
+window.changeQty = (index, delta) => {
+    cart[index].qty = (cart[index].qty || 1) + delta;
+    if (cart[index].qty <= 0) cart.splice(index, 1);
+    if (appliedCouponCode) { couponDiscount = 0; appliedCouponCode = ""; setUI('coupon-msg', ""); }
+    saveCart(); 
+    window.renderCartList();
 };
 
 window.applyCoupon = async () => {
@@ -235,28 +275,29 @@ window.applyCoupon = async () => {
     } catch(e) { alert("Coupon Error"); }
 };
 
+// ==========================================
+// 5. CHECKOUT & DELIVERY LOGIC
+// ==========================================
 window.openCheckoutModal = () => {
+    if(cart.length === 0) return alert("Basket empty!");
     window.closeModal('cartModal');
-    const modal = document.getElementById('checkoutModal');
-    if(modal) modal.style.display = "flex";
+    showFlex('checkoutModal');
     const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    setUI('final-amt', (sub - (isRedeeming ? 10 : 0) - couponDiscount));
+    const final = sub - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('final-amt', (final < 0 ? 0 : final));
 };
 
-// ==========================================
-// 6. DELIVERY & PAYMENT & CONFIRM
-// ==========================================
 window.setOrderType = (type) => {
     orderType = type;
     const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     const minDlv = parseInt(restaurantData.minOrder) || 0;
     
-    if(document.getElementById('type-pickup')) document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
-    if(document.getElementById('type-delivery')) document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
+    document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
+    document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
 
     if(type === 'Delivery') {
         if(subtotal < minDlv) {
-            alert(`Min ₹${minDlv} required for delivery!`);
+            alert(`Delivery ke liye minimum order ₹${minDlv} hona chahiye!`);
             window.setOrderType('Pickup');
             return;
         }
@@ -267,26 +308,33 @@ window.setOrderType = (type) => {
 
 window.setPayMode = (mode) => {
     selectedPaymentMode = mode;
-    if(document.getElementById('mode-online')) document.getElementById('mode-online').classList.toggle('selected', mode === 'Online');
-    if(document.getElementById('mode-cash')) document.getElementById('mode-cash').classList.toggle('selected', mode === 'Cash');
+    document.getElementById('mode-online').classList.toggle('selected', mode === 'Online');
+    document.getElementById('mode-cash').classList.toggle('selected', mode === 'Cash');
     
     const qrArea = document.getElementById('payment-qr-area');
     if(mode === 'Online') {
         showEl('payment-qr-area');
-        const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
-        const amt = document.getElementById('final-amt').innerText;
-        new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
-        setUI('final-upi-id', "UPI: " + restaurantData.upiId);
+        const qrDiv = document.getElementById('checkout-payment-qr');
+        if(qrDiv) {
+            qrDiv.innerHTML = "";
+            const amt = document.getElementById('final-amt').innerText;
+            new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
+            setUI('final-upi-id', "UPI ID: " + restaurantData.upiId);
+        }
     } else showEl('payment-qr-area', false);
-    if(document.getElementById('final-place-btn')) document.getElementById('final-place-btn').disabled = false;
+    document.getElementById('final-place-btn').disabled = false;
 };
 
+// ==========================================
+// 6. CONFIRM ORDER & SUCCESS
+// ==========================================
 window.confirmOrder = async () => {
     const nameEl = document.getElementById('cust-name-final');
     if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
     
     showEl('loader');
     const finalBill = document.getElementById('final-amt').innerText;
+    
     const orderData = {
         resId, table: tableNo, customerName: nameEl.value, userUID, items: cart,
         total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
@@ -297,54 +345,78 @@ window.confirmOrder = async () => {
 
     try {
         await addDoc(collection(db, "orders"), orderData);
+        
+        // Update Loyalty: Earn 10 pts per ₹100 spend
+        const earned = Math.floor(parseInt(finalBill)/10);
+        const userRef = doc(db, "users", userUID);
+        const uSnap = await getDoc(userRef);
+        let currentPts = uSnap.exists() ? uSnap.data().points : 0;
+        if(isRedeeming) currentPts -= 1000;
+        await setDoc(userRef, { points: currentPts + earned, name: nameEl.value }, { merge: true });
+
+        // Show Success View
         window.closeModal('checkoutModal');
         showFlex('success-screen');
-        setUI('s-name', nameEl.value); setUI('s-table', tableNo);
-        
-        // Update Loyalty
-        const earned = Math.floor(parseInt(finalBill)/10);
-        let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
-        await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
+        setUI('s-name', nameEl.value);
+        setUI('s-table', tableNo);
 
         localStorage.removeItem(`platto_cart_${resId}`);
         cart = []; updateCartUI();
-    } catch(e) { alert(e.message); }
+    } catch(e) { alert("Error: " + e.message); }
     showEl('loader', false);
 };
 
 // ==========================================
-// 7. UTILS, AUTH & ANNOUNCEMENT
+// 7. TRACKING, HISTORY & AUTH
 // ==========================================
-function renderBranding() {
-    setUI('res-name-display', restaurantData.name);
-    setUI('wait-time', restaurantData.prepTime || "20");
-    setUI('res-about-text', restaurantData.about || "");
-    setUI('tbl-no', tableNo);
-    if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
-    if(restaurantData.wifiName) { showFlex('wifi-display'); setUI('wifi-name', restaurantData.wifiName); setUI('wifi-pass', restaurantData.wifiPass); }
-    if(document.getElementById('link-fb')) document.getElementById('link-fb').href = restaurantData.fbLink || "#";
-    if(document.getElementById('link-ig')) document.getElementById('link-ig').href = restaurantData.igLink || "#";
-    if(document.getElementById('link-yt')) document.getElementById('link-yt').href = restaurantData.ytLink || "#";
-    if(document.getElementById('whatsapp-btn')) document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
-}
-
-function renderCategories() {
-    const list = document.getElementById('categories-list');
-    if(restaurantData.categories && list) {
-        list.innerHTML = `<button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>`;
-        restaurantData.categories.forEach(cat => {
-            list.innerHTML += `<button class="cat-pill" onclick="window.filterByCategory('${cat}', this)">${cat}</button>`;
+window.openTrackingModal = () => {
+    showFlex('trackingModal');
+    const list = document.getElementById('live-tracking-list');
+    onSnapshot(query(collection(db, "orders"), where("userUID", "==", userUID)), (snap) => {
+        if(!list) return; list.innerHTML = "";
+        let hasActive = false;
+        snap.forEach(d => {
+            const o = d.data();
+            if(!["Picked Up", "Rejected", "Done"].includes(o.status)) {
+                hasActive = true;
+                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary); padding:10px; margin-bottom:10px; background:#fff;">
+                    <span style="float:right; font-weight:800; color:var(--primary);">${o.status}</span>
+                    <b>Table ${o.table}</b><br><small>Total Bill: ₹${o.total}</small>
+                </div>`;
+            }
         });
-    }
-}
+        if(!hasActive) list.innerHTML = "<p style='padding:20px;'>No active orders.</p>";
+    });
+};
 
-function updatePointsUI() {
+window.openHistoryModal = async () => {
+    showFlex('historyModal');
+    const list = document.getElementById('history-items-list');
+    if(!list) return;
+    list.innerHTML = "Loading history...";
+    const q = query(collection(db, "orders"), where("userUID", "==", userUID), orderBy("timestamp", "desc"));
+    const snap = await getDocs(q);
+    list.innerHTML = snap.empty ? "<p style='padding:20px;'>No past orders.</p>" : "";
+    snap.forEach(d => {
+        const o = d.data();
+        if(o.status === "Picked Up" || o.status === "Done") {
+            const date = o.timestamp ? o.timestamp.toDate().toLocaleDateString('en-GB') : "Old";
+            list.innerHTML += `<div class="history-item" style="padding:15px; border-bottom:1px solid #eee; text-align:left;"><b>${date}</b> - ₹${o.total}</div>`;
+        }
+    });
+};
+
+window.updatePointsUI = () => {
     setUI('user-pts', userPoints);
     setUI('profile-pts-display', userPoints);
-    const btn = document.getElementById('redeem-btn');
-    if(btn) btn.disabled = userPoints < 1000;
-}
+    setUI('available-pts', userPoints);
+    const redeemBtn = document.getElementById('redeem-btn');
+    if(redeemBtn) redeemBtn.disabled = userPoints < 1000;
+};
 
+// ==========================================
+// 8. OTHERS
+// ==========================================
 window.handleAuth = async () => {
     const e = document.getElementById('auth-email').value;
     const p = document.getElementById('auth-pass').value;
@@ -365,53 +437,38 @@ window.saveUserProfile = async () => {
 function handleAnnouncement() {
     if(restaurantData.activeAnnouncement) {
         showFlex('announcement-modal');
-        setUI('ann-title', restaurantData.annTitle); setUI('ann-desc', restaurantData.annText);
+        setUI('ann-title', restaurantData.annTitle);
+        setUI('ann-desc', restaurantData.annText);
     }
 }
 
-function checkLiveOrders() {
-    const q = query(collection(db, "orders"), where("userUID", "==", userUID));
-    onSnapshot(q, (snap) => {
-        const trackList = document.getElementById('live-tracking-list');
-        const histList = document.getElementById('order-history-list');
-        if(trackList) trackList.innerHTML = "";
-        if(histList) histList.innerHTML = "";
-        
-        snap.forEach(d => {
-            const o = d.data();
-            const date = o.timestamp ? o.timestamp.toDate().toLocaleDateString('en-GB') : "--";
-            const html = `<div class="history-item"><b>${o.status}</b><br>Table ${o.table} | ₹${o.total} | ${date}</div>`;
-            
-            if(["Picked Up", "Rejected"].includes(o.status)) {
-                if(histList) histList.innerHTML += html;
-            } else {
-                if(trackList) trackList.innerHTML += html;
-            }
-        });
-    });
-}
+window.addToCart = (name, price) => {
+    const index = cart.findIndex(i => i.name === name);
+    if(index > -1) cart[index].qty++;
+    else cart.push({ id: Date.now(), name, price: parseInt(price), qty: 1 });
+    saveCart();
+    alert(name + " added!");
+};
 
-// UI Global Mappings
+window.filterByCategory = (cat, btn) => {
+    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    loadMenu(cat);
+};
 window.closeModal = (id) => showEl(id, false);
 window.openAuthModal = () => showFlex('authModal');
 window.openProfileModal = () => showFlex('profileModal');
 window.openCartModal = () => { showFlex('cartModal'); window.renderCartList(); };
-window.openTrackingModal = () => showFlex('trackingModal');
-window.openHistoryModal = () => showFlex('historyModal');
 window.logout = () => signOut(auth).then(() => location.reload());
 window.setAuthMode = (m) => currentAuthMode = m;
 window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
-window.filterByCategory = (cat, btn) => {
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active'); loadMenu(cat);
-};
 window.filterMenu = () => loadMenu();
-window.openSupportModal = () => showFlex('supportModal');
 window.submitSupportTicket = async () => {
     const queryTxt = document.getElementById('support-query').value;
     if(!queryTxt) return;
     await addDoc(collection(db, "tickets"), { resId, userUID, query: queryTxt, time: new Date() });
     alert("Ticket raised!"); window.closeModal('supportModal');
 };
+window.openSupportModal = () => showFlex('supportModal');
 
 init();
