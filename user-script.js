@@ -140,16 +140,22 @@ function loadMenu(category = 'All') {
 
 window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
-    setUI('cust-item-name', item.name);
     
-    // Fill Sizes
-    const sizeBox = document.getElementById('size-options-container');
-    if(sizeBox) {
-        sizeBox.innerHTML = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
-        if(item.priceM) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Medium"> Medium <span>₹${item.priceM}</span></label>`;
-        if(item.priceL) sizeBox.innerHTML += `<label class="option-row"><input type="radio" name="p-size" value="Large"> Large <span>₹${item.priceL}</span></label>`;
+    // 1. Name Set karein
+    document.getElementById('cust-item-name').innerText = item.name;
+    
+    // 2. Ingredients Set karein (FIXED)
+    const ingEl = document.getElementById('cust-item-ingredients');
+    if(ingEl) {
+        ingEl.innerText = item.ingredients ? item.ingredients : "Freshly prepared with quality ingredients.";
     }
+    
+    // 3. Prices Set karein
+    setUI('p-price-s', "₹" + item.price);
+    setUI('p-price-m', item.priceM ? "₹" + item.priceM : "₹" + (parseInt(item.price) + 50));
+    setUI('p-price-l', item.priceL ? "₹" + item.priceL : "₹" + (parseInt(item.price) + 100));
 
+    // 4. Extras/Variants Load karein
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
         extrasDiv.innerHTML = "";
