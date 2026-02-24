@@ -27,14 +27,8 @@ let currentItemToCustomize = null;
 
 const loader = document.getElementById('loader');
 
-// --- SAFETY HELPERS ---
-const setUI = (id, val) => { 
-    const el = document.getElementById(id); 
-    if(el) {
-        if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = val;
-        else el.innerText = val;
-    }
-};
+// Safety Helpers
+const setUI = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
 const showEl = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "block" : "none"; };
 const showFlex = (id, show = true) => { const el = document.getElementById(id); if(el) el.style.display = show ? "flex" : "none"; };
 
@@ -47,6 +41,7 @@ async function init() {
         return;
     }
 
+    // 1. Fetch Restaurant Main Settings
     const resSnap = await getDoc(doc(db, "restaurants", resId));
     if (resSnap.exists()) {
         restaurantData = resSnap.data();
@@ -55,19 +50,24 @@ async function init() {
         handleAnnouncement();
     }
 
+    // 2. Auth & Loyalty Sync
     onAuthStateChanged(auth, async (user) => {
+        const navAuthBtn = document.getElementById('nav-auth-btn');
+        const navProfileBtn = document.getElementById('nav-profile-btn');
+
         if (user) {
             userUID = user.uid;
             showEl('nav-auth-btn', false);
             showEl('nav-profile-btn');
             
+            // Real-time listener for Points & Profile Data
             onSnapshot(doc(db, "users", userUID), (uSnap) => {
                 if (uSnap.exists()) {
                     userPoints = uSnap.data().points || 0;
                     updatePointsUI();
-                    setUI('user-profile-name', uSnap.data().name || "");
-                    setUI('user-profile-phone', uSnap.data().phone || "");
-                    setUI('cust-name-final', uSnap.data().name || "");
+                    if(document.getElementById('user-profile-name')) document.getElementById('user-profile-name').value = uSnap.data().name || "";
+                    if(document.getElementById('user-profile-phone')) document.getElementById('user-profile-phone').value = uSnap.data().phone || "";
+                    if(document.getElementById('cust-name-final')) document.getElementById('cust-name-final').value = uSnap.data().name || "";
                 }
             });
         } else {
@@ -81,8 +81,39 @@ async function init() {
     updateCartUI();
 }
 
+function renderBranding() {
+    setUI('res-name-display', restaurantData.name);
+    setUI('wait-time', restaurantData.prepTime || "20");
+    setUI('res-about-text', restaurantData.about || "");
+    setUI('tbl-no', tableNo);
+    if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
+    if(document.getElementById('hero-banner-img') && restaurantData.bannerUrl) document.getElementById('hero-banner-img').src = restaurantData.bannerUrl;
+
+    // WiFi
+    if(restaurantData.wifiName) {
+        showFlex('wifi-display');
+        setUI('wifi-name', restaurantData.wifiName);
+        setUI('wifi-pass', restaurantData.wifiPass);
+    }
+    // Social Links
+    if(document.getElementById('link-fb')) document.getElementById('link-fb').href = restaurantData.fbLink || "#";
+    if(document.getElementById('link-ig')) document.getElementById('link-ig').href = restaurantData.igLink || "#";
+    if(document.getElementById('link-yt')) document.getElementById('link-yt').href = restaurantData.ytLink || "#";
+    if(document.getElementById('whatsapp-btn')) document.getElementById('whatsapp-btn').href = `https://wa.me/91${restaurantData.ownerPhone}`;
+}
+
+function renderCategories() {
+    const list = document.getElementById('categories-list');
+    if(restaurantData.categories && list) {
+        list.innerHTML = `<button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>`;
+        restaurantData.categories.forEach(cat => {
+            list.innerHTML += `<button class="cat-pill" onclick="window.filterByCategory('${cat}', this)">${cat}</button>`;
+        });
+    }
+}
+
 // ==========================================
-// 3. MENU & CUSTOMIZATION (S/M/L logic)
+// 3. MENU & CUSTOMIZATION (S/M/L Logic)
 // ==========================================
 function loadMenu(category = 'All') {
     onSnapshot(collection(db, "restaurants", resId, "menu"), (snap) => {
@@ -96,6 +127,7 @@ function loadMenu(category = 'All') {
             if(category !== 'All' && item.category !== category) return;
             if(search && !item.name.toLowerCase().includes(search)) return;
 
+            // Check for multiple sizes
             const hasSizes = (item.priceM > 0 || item.priceL > 0);
             const clickAction = hasSizes 
                 ? `window.openCustomize("${d.id}", ${JSON.stringify(item).replace(/'/g, "&apos;")})`
@@ -119,7 +151,11 @@ window.openCustomize = (id, item) => {
     currentItemToCustomize = { ...item, id };
     setUI('cust-item-name', item.name);
     
-    // FIX: Match with HTML ID "size-options"
+    // Ingredients
+    if(item.ingredients) { showEl('ing-box-ui'); setUI('cust-item-ingredients', item.ingredients); }
+    else { showEl('ing-box-ui', false); }
+
+    // Sizes (Matches HTML ID 'size-options')
     const sizeBox = document.getElementById('size-options');
     if(sizeBox) {
         let html = `<label class="option-row"><input type="radio" name="p-size" value="Regular" checked> Regular <span>₹${item.price}</span></label>`;
@@ -128,10 +164,10 @@ window.openCustomize = (id, item) => {
         sizeBox.innerHTML = html;
     }
 
-    // Ingredients & Extras logic
+    // Extras
     const extrasDiv = document.getElementById('extras-options');
     if(extrasDiv) {
-        extrasDiv.innerHTML = item.ingredients ? `<p style="font-size:0.8rem; color:gray; margin-bottom:10px; text-align:left;">📝 ${item.ingredients}</p>` : "";
+        extrasDiv.innerHTML = "";
         if(restaurantData.variants) {
             restaurantData.variants.forEach(v => {
                 extrasDiv.innerHTML += `<label class="option-row">
@@ -147,18 +183,19 @@ window.openCustomize = (id, item) => {
 window.addCustomizedToCart = () => {
     const sizeInput = document.querySelector('input[name="p-size"]:checked');
     const size = sizeInput ? sizeInput.value : "Regular";
-    let price = parseInt(currentItemToCustomize.price);
-    if(size === 'Medium') price = parseInt(currentItemToCustomize.priceM) || (price + 50);
-    if(size === 'Large') price = parseInt(currentItemToCustomize.priceL) || (price + 100);
+    let basePrice = parseInt(currentItemToCustomize.price);
+    if(size === 'Medium' && currentItemToCustomize.priceM) basePrice = parseInt(currentItemToCustomize.priceM);
+    if(size === 'Large' && currentItemToCustomize.priceL) basePrice = parseInt(currentItemToCustomize.priceL);
     
-    document.querySelectorAll('.ex-item:checked').forEach(el => price += parseInt(el.dataset.price));
-    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price, qty: 1 });
+    document.querySelectorAll('.ex-item:checked').forEach(el => basePrice += parseInt(el.dataset.price));
+    cart.push({ id: Date.now(), name: `${currentItemToCustomize.name} (${size})`, price: basePrice, qty: 1 });
     saveCart();
     window.closeModal('customizeModal');
+    if (window.navigator.vibrate) window.navigator.vibrate(50);
 };
 
 // ==========================================
-// 4. BASKET LOGIC (+/- & Quantity)
+// 4. BASKET LOGIC (+/- Quantity & Coupons)
 // ==========================================
 function saveCart() {
     localStorage.setItem(`platto_cart_${resId}`, JSON.stringify(cart));
@@ -211,76 +248,57 @@ window.changeQty = (index, delta) => {
     cart[index].qty = (cart[index].qty || 1) + delta;
     if (cart[index].qty <= 0) cart.splice(index, 1);
     if (appliedCouponCode) { couponDiscount = 0; appliedCouponCode = ""; setUI('coupon-msg', ""); }
-    saveCart(); window.renderCartList();
+    saveCart(); 
+    window.renderCartList();
+};
+
+window.applyCoupon = async () => {
+    const code = document.getElementById('coupon-code').value.trim().toUpperCase();
+    if (!code) return alert("Enter Code");
+    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    try {
+        const q = query(collection(db, "restaurants", resId, "coupons"), where("code", "==", code));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const c = snap.docs[0].data();
+            if (subtotal < c.minOrder) return alert(`Min order ₹${c.minOrder} required!`);
+            couponDiscount = Math.min(Math.floor((subtotal * c.percent) / 100), c.maxDiscount);
+            appliedCouponCode = code;
+            setUI('coupon-msg', `🎉 Applied! ₹${couponDiscount} OFF`);
+            window.renderCartList();
+        } else alert("Invalid Coupon");
+    } catch(e) { alert("Coupon Error"); }
 };
 
 // ==========================================
-// 5. CHECKOUT & ORDER
+// 5. CHECKOUT & DELIVERY LOGIC (Min Order from Owner)
 // ==========================================
 window.openCheckoutModal = () => {
+    if(cart.length === 0) return alert("Basket empty!");
     window.closeModal('cartModal');
-    const modal = document.getElementById('checkoutModal');
-    if(modal) modal.style.display = "flex";
+    showFlex('checkoutModal');
     const sub = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-    setUI('final-amt', (sub - (isRedeeming ? 10 : 0) - couponDiscount));
+    const final = sub - (isRedeeming ? 10 : 0) - couponDiscount;
+    setUI('final-amt', final < 0 ? 0 : final);
 };
 
-window.confirmOrder = async () => {
-    const nameEl = document.getElementById('cust-name-final');
-    if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
-    showEl('loader');
-    const finalBill = document.getElementById('final-amt').innerText;
+window.setOrderType = (type) => {
+    orderType = type;
+    const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const minDlv = parseInt(restaurantData.minOrder) || 0;
     
-    const orderData = {
-        resId, table: tableNo, customerName: nameEl.value, userUID, items: cart,
-        total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
-        orderType, timestamp: new Date(), instruction: document.getElementById('chef-note') ? document.getElementById('chef-note').value : "",
-        address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : "At Table"
-    };
+    document.getElementById('type-pickup').classList.toggle('active', type === 'Pickup');
+    document.getElementById('type-delivery').classList.toggle('active', type === 'Delivery');
 
-    try {
-        await addDoc(collection(db, "orders"), orderData);
-        window.closeModal('checkoutModal');
-        showFlex('success-screen');
-        setUI('s-name', nameEl.value); setUI('s-table', tableNo);
-        
-        const earned = Math.floor(parseInt(finalBill)/100)*10;
-        const userRef = doc(db, "users", userUID);
-        const uSnap = await getDoc(userRef);
-        let pts = uSnap.exists() ? uSnap.data().points : 0;
-        if(isRedeeming) pts -= 1000;
-        await setDoc(userRef, { points: pts + earned, name: nameEl.value }, { merge: true });
-        localStorage.removeItem(`platto_cart_${resId}`); cart = []; updateCartUI();
-    } catch(e) { alert(e.message); }
-    showEl('loader', false);
-};
-
-// ==========================================
-// 6. HELPERS & OTHERS
-// ==========================================
-function renderBranding() {
-    setUI('res-name-display', restaurantData.name);
-    setUI('wait-time', restaurantData.prepTime || "20");
-    setUI('res-about-text', restaurantData.about || "");
-    setUI('tbl-no', tableNo);
-    if(document.getElementById('res-logo') && restaurantData.logoUrl) document.getElementById('res-logo').src = restaurantData.logoUrl;
-}
-
-function renderCategories() {
-    const list = document.getElementById('categories-list');
-    if(restaurantData.categories && list) {
-        list.innerHTML = `<button class="cat-pill active" onclick="window.filterByCategory('All', this)">All</button>`;
-        restaurantData.categories.forEach(cat => {
-            list.innerHTML += `<button class="cat-pill" onclick="window.filterByCategory('${cat}', this)">${cat}</button>`;
-        });
-    }
-}
-
-window.addToCart = (name, price) => {
-    const index = cart.findIndex(i => i.name === name);
-    if(index > -1) cart[index].qty++;
-    else cart.push({ id: Date.now(), name, price: parseInt(price), qty: 1 });
-    saveCart();
+    if(type === 'Delivery') {
+        if(subtotal < minDlv) {
+            alert(`Delivery ke liye minimum order ₹${minDlv} hona chahiye!`);
+            window.setOrderType('Pickup');
+            return;
+        }
+        setUI('delivery-dynamic-msg', `⚠️ Delivery within ${restaurantData.maxKM || 3}KM (Min Order ₹${minDlv})`);
+        showEl('delivery-address-box');
+    } else showEl('delivery-address-box', false);
 };
 
 window.setPayMode = (mode) => {
@@ -292,31 +310,112 @@ window.setPayMode = (mode) => {
         const qrDiv = document.getElementById('checkout-payment-qr'); qrDiv.innerHTML = "";
         const amt = document.getElementById('final-amt').innerText;
         new QRCode(qrDiv, { text: `upi://pay?pa=${restaurantData.upiId}&am=${amt}`, width: 140, height: 140 });
-        setUI('final-upi-id', restaurantData.upiId);
+        setUI('final-upi-id', "UPI: " + restaurantData.upiId);
     } else showEl('payment-qr-area', false);
     document.getElementById('final-place-btn').disabled = false;
 };
 
-window.closeModal = (id) => showEl(id, false);
-window.openAuthModal = () => showFlex('authModal');
-window.openProfileModal = () => showFlex('profileModal');
-window.openCartModal = () => { showFlex('cartModal'); window.renderCartList(); };
-window.openTrackingModal = () => showFlex('trackingModal');
-window.openHistoryModal = () => showFlex('historyModal');
-window.logout = () => signOut(auth).then(() => location.reload());
-window.filterByCategory = (cat, btn) => {
-    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); loadMenu(cat);
-};
-window.filterMenu = () => loadMenu();
-window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
+// ==========================================
+// 6. CONFIRM ORDER & LOYALTY UPDATES
+// ==========================================
+window.confirmOrder = async () => {
+    const nameEl = document.getElementById('cust-name-final');
+    if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
+    
+    showEl('loader');
+    const finalBill = document.getElementById('final-amt').innerText;
+    
+    const orderData = {
+        resId, table: tableNo, customerName: nameEl.value, userUID, items: cart,
+        total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
+        orderType, timestamp: new Date(), 
+        instruction: document.getElementById('chef-note').value || "", 
+        address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : "At Table"
+    };
 
+    try {
+        await addDoc(collection(db, "orders"), orderData);
+        window.closeModal('checkoutModal');
+        showFlex('success-screen');
+        setUI('s-name', nameEl.value); setUI('s-table', tableNo);
+        
+        // Update Loyalty: ₹100 = 10pts
+        const earned = Math.floor(parseInt(finalBill)/10);
+        let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
+        await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
+
+        localStorage.removeItem(`platto_cart_${resId}`);
+        cart = []; updateCartUI();
+    } catch(e) { alert(e.message); }
+    showEl('loader', false);
+};
+
+// ==========================================
+// 7. HISTORY & TRACKING (Separate Modals)
+// ==========================================
+window.openTrackingModal = () => {
+    showFlex('trackingModal');
+    const list = document.getElementById('live-tracking-list');
+    onSnapshot(query(collection(db, "orders"), where("userUID", "==", userUID)), (snap) => {
+        if(!list) return; list.innerHTML = "";
+        let hasActive = false;
+        snap.forEach(d => {
+            const o = d.data();
+            if(!["Picked Up", "Rejected", "Done"].includes(o.status)) {
+                hasActive = true;
+                list.innerHTML += `<div class="history-item" style="border-left:4px solid var(--primary); padding:10px; margin-bottom:10px; background:#fff; text-align:left;">
+                    <span style="float:right; color:var(--primary); font-weight:800;">${o.status}</span>
+                    <b>Table ${o.table}</b><br><small>Order Total: ₹${o.total}</small>
+                </div>`;
+            }
+        });
+        if(!hasActive) list.innerHTML = "<p style='padding:20px;'>No active orders.</p>";
+    });
+};
+
+window.openHistoryModal = async () => {
+    showFlex('historyModal');
+    const list = document.getElementById('history-items-list');
+    if(!list) return;
+    list.innerHTML = "Loading history...";
+    const q = query(collection(db, "orders"), where("userUID", "==", userUID), orderBy("timestamp", "desc"));
+    const snap = await getDocs(q);
+    list.innerHTML = snap.empty ? "<p style='padding:20px;'>No past orders.</p>" : "";
+    snap.forEach(d => {
+        const o = d.data();
+        if(o.status === "Picked Up" || o.status === "Done") {
+            const date = o.timestamp ? o.timestamp.toDate().toLocaleDateString('en-GB') : "Old";
+            list.innerHTML += `<div class="history-item" style="padding:15px; border-bottom:1px solid #eee; text-align:left;"><b>${date}</b> - ₹${o.total} [${o.status}]</div>`;
+        }
+    });
+};
+
+// ==========================================
+// 8. OTHERS (AUTH, HELPERS, POPUPS)
+// ==========================================
 function updatePointsUI() {
     setUI('user-pts', userPoints);
     setUI('profile-pts-display', userPoints);
-    const btn = document.getElementById('redeem-btn');
-    if(btn) btn.disabled = userPoints < 1000;
+    const redeemBtn = document.getElementById('redeem-btn');
+    if(redeemBtn) redeemBtn.disabled = userPoints < 1000;
 }
+
+window.handleAuth = async () => {
+    const e = document.getElementById('auth-email').value;
+    const p = document.getElementById('auth-pass').value;
+    try {
+        if(currentAuthMode === 'login') await signInWithEmailAndPassword(auth, e, p);
+        else await createUserWithEmailAndPassword(auth, e, p);
+        window.closeModal('authModal');
+    } catch(err) { alert(err.message); }
+};
+
+window.saveUserProfile = async () => {
+    const n = document.getElementById('user-profile-name').value;
+    const ph = document.getElementById('user-profile-phone').value;
+    await setDoc(doc(db, "users", userUID), { name: n, phone: ph }, { merge: true });
+    alert("Saved!"); window.closeModal('profileModal');
+};
 
 function handleAnnouncement() {
     if(restaurantData.activeAnnouncement) {
@@ -324,5 +423,37 @@ function handleAnnouncement() {
         setUI('ann-title', restaurantData.annTitle); setUI('ann-desc', restaurantData.annText);
     }
 }
+
+window.filterByCategory = (cat, btn) => {
+    document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active'); loadMenu(cat);
+};
+
+window.addToCart = (name, price) => {
+    const index = cart.findIndex(i => i.name === name);
+    if(index > -1) cart[index].qty++;
+    else cart.push({ id: Date.now(), name, price: parseInt(price), qty: 1 });
+    saveCart();
+};
+
+window.closeModal = (id) => showEl(id, false);
+window.openAuthModal = () => showFlex('authModal');
+window.openProfileModal = () => showFlex('profileModal');
+window.openCartModal = () => { showFlex('cartModal'); window.renderCartList(); };
+window.logout = () => signOut(auth).then(() => location.reload());
+window.setAuthMode = (m) => {
+    currentAuthMode = m;
+    document.getElementById('tab-login').classList.toggle('active', m === 'login');
+    document.getElementById('tab-signup').classList.toggle('active', m === 'signup');
+};
+window.redeemPoints = () => { isRedeeming = true; alert("Reward Applied!"); window.openCartModal(); };
+window.filterMenu = () => loadMenu();
+window.submitSupportTicket = async () => {
+    const q = document.getElementById('support-query').value;
+    if(!q) return;
+    await addDoc(collection(db, "tickets"), { resId, userUID, query: q, time: new Date() });
+    alert("Ticket raised!"); window.closeModal('supportModal');
+};
+window.openSupportModal = () => showFlex('supportModal');
 
 init();
