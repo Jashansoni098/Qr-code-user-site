@@ -336,10 +336,17 @@ window.confirmOrder = async () => {
         placeBtn.style.opacity = "0.7";
     }
 
-    const finalAmtEl = document.getElementById('final-amt');
-    const finalBill = finalAmtEl ? finalAmtEl.innerText : "0"; 
-
     showEl('loader');
+
+    // --- 3. FIX: CALCULATE TOTAL DIRECTLY FROM CART (Source of Truth) ---
+    // Hum HTML se nahi, balki seedha basket se total nikalenge taaki hamesha sahi amount jaye
+    const subtotal = cart.reduce((sum, item) => sum + (parseInt(item.price) * (item.qty || 1)), 0);
+    
+    let finalBillValue = subtotal;
+    if (isRedeeming) finalBillValue -= 10; // Loyalty discount
+    if (couponDiscount) finalBillValue -= couponDiscount; // Coupon discount
+    
+    if (finalBillValue < 0) finalBillValue = 0;
 
     const orderData = {
         resId, 
