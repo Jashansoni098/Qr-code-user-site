@@ -336,9 +336,11 @@ window.confirmOrder = async () => {
         placeBtn.style.opacity = "0.7";
     }
 
+    const finalAmtEl = document.getElementById('final-amt');
+    const finalBill = finalAmtEl ? finalAmtEl.innerText : "0"; 
+
     showEl('loader');
-    const finalBill = document.getElementById('final-amt').innerText;
-    
+
     const orderData = {
         resId, 
         table: tableEl.value, // User input wala table number
