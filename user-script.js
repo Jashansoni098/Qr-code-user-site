@@ -342,11 +342,11 @@ window.confirmOrder = async () => {
     // Hum HTML se nahi, balki seedha basket se total nikalenge taaki hamesha sahi amount jaye
     const subtotal = cart.reduce((sum, item) => sum + (parseInt(item.price) * (item.qty || 1)), 0);
     
-    let finalBillValue = subtotal;
-    if (isRedeeming) finalBillValue -= 10; // Loyalty discount
-    if (couponDiscount) finalBillValue -= couponDiscount; // Coupon discount
+    let finalBill = subtotal;
+    if (isRedeeming) finalBill -= 10; // Loyalty discount
+    if (couponDiscount) finalBill -= couponDiscount; // Coupon discount
     
-    if (finalBillValue < 0) finalBillValue = 0;
+    if (finalBill < 0) finalBill = 0;
 
     const orderData = {
         resId, 
