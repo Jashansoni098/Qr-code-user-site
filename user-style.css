@@ -316,55 +316,104 @@ body {
     margin-bottom: 20px;
 }
 
+/* ==========================================
+   LOYALTY CARD & REDEEM BUTTON (PREMIUM UI)
+   ========================================== */
 .loyalty-card {
-    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+    border: 1px solid #fecdd3;
     border-radius: 24px;
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 15px;
-    border: 1px solid #fecdd3;
-    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.05);
+    box-shadow: 0 10px 20px rgba(225, 29, 72, 0.05);
+    margin: 20px;
 }
 
+/* Points Circle Styling */
 .pts-circle {
-    background: white;
-    width: 60px;
-    height: 60px;
+    background: var(--white);
+    width: 65px;
+    height: 65px;
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 2px solid var(--primary);
+    border: 3px solid var(--primary);
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.1);
     flex-shrink: 0;
 }
 
 .pts-circle h2 {
     margin: 0;
     color: var(--primary);
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 800;
 }
 
 .pts-circle small {
     font-size: 0.6rem;
     font-weight: 800;
-    text-transform: uppercase;
     color: var(--gray);
+    text-transform: uppercase;
 }
 
+/* Redeem Button - Professional Pill Style */
+#redeem-btn {
+    background: linear-gradient(90deg, #e11d48, #fb7185);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#redeem-btn::before {
+    content: '🎁';
+    font-size: 0.9rem;
+}
+
+/* Jab points 1000 se kam hon (Disabled State) */
+#redeem-btn:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.7;
+    filter: grayscale(1);
+}
+
+/* Hover effect jab button active ho */
+#redeem-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(225, 29, 72, 0.4);
+    filter: brightness(1.1);
+}
+
+/* Points Text info */
 .pts-details p {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    color: #be123c;
+    color: #1e293b;
     margin: 0;
 }
 
 .pts-details small {
+    display: block;
     font-size: 0.75rem;
-    color: #e11d48;
+    color: #be123c;
     font-weight: 600;
+    margin-top: 2px;
 }
 
 /* --- Order History Cards --- */
