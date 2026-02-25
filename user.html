@@ -21,16 +21,36 @@
     <!-- Professional Page Loader -->
     <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
 
-    <!-- 1. ANNOUNCEMENT POPUP (Landing Feature) -->
-    <div id="announcement-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-content ann-popup">
-            <div class="close-icon-fixed" onclick="window.closeModal('announcement-modal')">&times;</div>
-            <div id="ann-img-container" style="margin-bottom:15px;"></div>
-            <h2 id="ann-title">Special Announcement</h2>
-            <p id="ann-desc">Loading special deals for you...</p>
-            <button class="primary-btn" onclick="window.closeModal('announcement-modal')">View Today's Menu</button>
+   <!-- 1. PROFESSIONAL ANNOUNCEMENT POPUP -->
+<div id="announcement-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content ann-card-pro">
+        <!-- Close Button -->
+        <span class="close-modal-pro" onclick="window.closeModal('announcement-modal')">&times;</span>
+        
+        <!-- Offer Badge -->
+        <div class="ann-badge">LIMITED TIME OFFER</div>
+        
+        <!-- Icon/Graphic Area -->
+        <div class="ann-icon-box">
+            <i class="fas fa-fire-alt"></i> <!-- Fire Icon -->
         </div>
+
+        <div class="ann-body">
+            <h2 id="ann-title">Special Offer</h2>
+            <div class="ann-divider"></div>
+            <p id="ann-desc">Loading amazing deals...</p>
+        </div>
+
+        <!-- Details Tag -->
+        <div class="ann-tagline">
+            <i class="fas fa-info-circle"></i> T&C Applied
+        </div>
+
+        <button class="primary-btn ann-btn" onclick="window.closeModal('announcement-modal')">
+            Explore Menu & Order Now
+        </button>
     </div>
+</div>
 
     <div class="app-wrapper">
         <!-- HEADER SECTION -->

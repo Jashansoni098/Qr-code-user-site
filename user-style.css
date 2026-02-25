@@ -84,7 +84,7 @@ body {
 .wifi-badge { background: #eff6ff; color: #3b82f6; padding: 6px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 5px; }
 
 /* ==========================================
-   3. CATEGORY SCROLL (SWIGGY STYLE)
+   3. CATEGORY SCROLL (my STYLE)
    ========================================== */
 .category-nav {
     padding: 10px 0 15px 20px;
@@ -774,4 +774,109 @@ input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+}
+/* ==========================================
+   PROFESSIONAL ANNOUNCEMENT CARD
+   ========================================== */
+.ann-card-pro {
+    background: #ffffff;
+    width: 90% !important;
+    max-width: 380px !important;
+    padding: 40px 25px 30px !important;
+    border-radius: 30px !important;
+    text-align: center;
+    position: relative;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+    overflow: visible !important;
+}
+
+/* Floating Badge */
+.ann-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: white;
+    padding: 6px 20px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.3);
+}
+
+/* Close Button Pro */
+.close-modal-pro {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 1.8rem;
+    color: #cbd5e1;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Icon Box */
+.ann-icon-box {
+    width: 70px;
+    height: 70px;
+    background: #fff1f2;
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 20px;
+    animation: pulseIcon 2s infinite;
+}
+
+@keyframes pulseIcon {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(225, 29, 72, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+}
+
+/* Title & Divider */
+.ann-card-pro h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--dark);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.ann-divider {
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    height: 4px;
+    border-radius: 10px;
+    margin: 10px auto 15px;
+}
+
+.ann-card-pro p {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* Tagline */
+.ann-tagline {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    margin: 15px 0;
+}
+
+/* Professional CTA Button */
+.ann-btn {
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+    border-radius: 15px !important;
+    padding: 16px !important;
+    font-size: 0.95rem !important;
+    box-shadow: 0 10px 20px rgba(225, 29, 72, 0.3) !important;
 }
