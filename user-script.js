@@ -330,9 +330,9 @@ window.confirmOrder = async () => {
     if(!phoneEl || !phoneEl.value.trim()) return alert("Enter Mobile Number!");
     
     // Prevent Double-Tap: Button disable kar dein
-    if(placeBtn) placeBtn.disabled = true;
-    //Button click hona band ho jayega
-    placeBtn.innerText = "Placing Order... ⏳"; // Text badal jayega
+   if(placeBtn) {
+        placeBtn.disabled = true;
+        placeBtn.innerText = "Placing Order... ⏳"; 
         placeBtn.style.opacity = "0.7";
     }
 
