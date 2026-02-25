@@ -320,15 +320,37 @@ window.setPayMode = (mode) => {
 // ==========================================
 window.confirmOrder = async () => {
     const nameEl = document.getElementById('cust-name-final');
+    const tableEl = document.getElementById('cust-table-final'); // New field for Table
+    const phoneEl = document.getElementById('cust-phone-final'); // New field for Mobile
+    const placeBtn = document.getElementById('final-place-btn'); // Order button ID
+
+    // Validation
     if(!nameEl || !nameEl.value.trim()) return alert("Enter Name!");
+    if(!tableEl || !tableEl.value.trim()) return alert("Enter Table Number!");
+    if(!phoneEl || !phoneEl.value.trim()) return alert("Enter Mobile Number!");
     
+    // Prevent Double-Tap: Button disable kar dein
+    if(placeBtn) placeBtn.disabled = true;
+    //Button click hona band ho jayega
+    placeBtn.innerText = "Placing Order... ⏳"; // Text badal jayega
+        placeBtn.style.opacity = "0.7";
+    }
+
     showEl('loader');
     const finalBill = document.getElementById('final-amt').innerText;
     
     const orderData = {
-        resId, table: tableNo, customerName: nameEl.value, userUID, items: cart,
-        total: finalBill, status: "Pending", paymentMode: selectedPaymentMode,
-        orderType, timestamp: new Date(), 
+        resId, 
+        table: tableEl.value, // User input wala table number
+        customerName: nameEl.value, 
+        customerPhone: phoneEl.value, // User input wala mobile number
+        userUID, 
+        items: cart,
+        total: finalBill, 
+        status: "Pending", 
+        paymentMode: selectedPaymentMode,
+        orderType, 
+        timestamp: new Date(), 
         instruction: document.getElementById('chef-note').value || "", 
         address: document.getElementById('cust-address') ? document.getElementById('cust-address').value : "At Table"
     };
@@ -337,16 +359,27 @@ window.confirmOrder = async () => {
         await addDoc(collection(db, "orders"), orderData);
         window.closeModal('checkoutModal');
         showFlex('success-screen');
-        setUI('s-name', nameEl.value); setUI('s-table', tableNo);
+        setUI('s-name', nameEl.value); 
+        setUI('s-table', tableEl.value); // Success screen par naya table number dikhayega
         
         // Update Loyalty: ₹100 = 10pts
         const earned = Math.floor(parseInt(finalBill)/10);
         let newPts = userPoints + earned; if(isRedeeming) newPts -= 1000;
-        await setDoc(doc(db, "users", userUID), { points: newPts, name: nameEl.value }, { merge: true });
+        
+        // Points ke saath phone number bhi save ho jayega
+        await setDoc(doc(db, "users", userUID), { 
+            points: newPts, 
+            name: nameEl.value, 
+            phone: phoneEl.value 
+        }, { merge: true });
 
         localStorage.removeItem(`platto_cart_${resId}`);
-        cart = []; updateCartUI();
-    } catch(e) { alert(e.message); }
+        cart = []; 
+        updateCartUI();
+    } catch(e) { 
+        alert(e.message); 
+        if(placeBtn) placeBtn.disabled = false; // Error aane par button wapas enable karein
+    }
     showEl('loader', false);
 };
 

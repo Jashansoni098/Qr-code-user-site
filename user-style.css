@@ -698,3 +698,31 @@ body {
 .close-modal-x:hover {
     color: var(--primary);
 }
+/* Button jab disabled ho tab ka look */
+.primary-btn:disabled {
+    background-color: #cbd5e1 !important; /* Grey color */
+    color: #64748b !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
+}
+/* Table aur Mobile Number Inputs ka Professional Look */
+#cust-table-final, #cust-phone-final {
+    margin-top: 10px;
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+#cust-table-final:focus, #cust-phone-final:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
+    background-color: #fff;
+}
+
+/* Chrome, Safari, Edge se arrows hatane ke liye (Table Number input) */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
