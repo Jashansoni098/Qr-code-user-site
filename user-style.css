@@ -994,3 +994,21 @@ input::-webkit-inner-spin-button {
         flex-direction: column;
     }
 }
+.business-footer-card {
+    margin-top: 30px;
+    background: #0f172a; /* Dark Blue */
+    padding: 25px;
+    border-radius: 20px;
+    color: white;
+    text-align: center;
+}
+.business-footer-card h5 { font-size: 1rem; margin-bottom: 5px; color: #fbbf24; }
+.business-footer-card p { font-size: 0.75rem; opacity: 0.8; margin-bottom: 20px; }
+.master-contact-flex { display: flex; gap: 10px; justify-content: center; }
+.master-btn-wa, .master-btn-mail {
+    flex: 1; padding: 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 800;
+    text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.master-btn-wa { background: #22c55e; color: white; }
+.master-btn-mail { background: #334155; color: white; }
+.business-footer-card small { display: block; margin-top: 20px; font-size: 0.6rem; opacity: 0.5; }
